@@ -7,9 +7,11 @@ import com.example.internshipmanagement.dto.response.student.StudentResponse;
 import com.example.internshipmanagement.entity.Student;
 import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.Role;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.mapper.StudentMapper;
 import com.example.internshipmanagement.repository.IStudentRepository;
 import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
 import com.example.internshipmanagement.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
@@ -31,6 +34,7 @@ public class StudentServiceImpl implements StudentService {
     private final IStudentRepository studentRepository;
     private final IUserRepository userRepository;
     private final StudentMapper studentMapper;
+    private final IInternshipAssignmentRepository internshipAssignmentRepository;
 
     @Override
     public List<StudentResponse> getAllStudents() {
@@ -146,6 +150,29 @@ public class StudentServiceImpl implements StudentService {
         student = studentRepository.save(student);
         log.info("Student profile updated: id={}, studentCode={}", studentId, student.getStudentCode());
         return studentMapper.toStudentResponse(student);
+    }
+
+    @Override
+    @Transactional
+    public void deleteStudent(Integer id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay sinh vien voi id: " + id));
+
+        if (internshipAssignmentRepository.existsByStudentId(id)) {
+            throw new ResourceConflictException("Khong the xoa sinh vien dang co lich su phan cong thuc tap");
+        }
+
+        User user = student.getUser();
+        try {
+            studentRepository.delete(student);
+            studentRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
+
+        user.setIsActive(false);
+        userRepository.save(user);
+        log.info("Student profile deleted: id={}, user deactivated", id);
     }
 }
 

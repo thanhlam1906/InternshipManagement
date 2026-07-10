@@ -77,5 +77,19 @@ public class StudentController {
 
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
+
+    @DeleteMapping("/{student_id}")
+    public ResponseEntity<ApiDataResponse<Void>> deleteStudent(
+            @PathVariable("student_id") Integer studentId) {
+        studentService.deleteStudent(studentId);
+
+        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
+                .success(true)
+                .message("Xoa thong tin sinh vien thanh cong")
+                .httpStatus(HttpStatus.OK)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
 }
 

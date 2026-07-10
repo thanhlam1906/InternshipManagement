@@ -1,6 +1,7 @@
 package com.example.internshipmanagement.service.impl;
 
 import com.example.internshipmanagement.dto.request.auth.LoginRequest;
+import com.example.internshipmanagement.dto.request.auth.ChangePasswordRequest;
 import com.example.internshipmanagement.dto.response.auth.LoginResponse;
 import com.example.internshipmanagement.dto.response.user.UserResponse;
 import com.example.internshipmanagement.entity.User;
@@ -15,6 +16,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 
@@ -26,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final IUserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -82,5 +85,30 @@ public class AuthServiceImpl implements AuthService {
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
-}
 
+    @Override
+    public void changePassword(ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Mat khau moi va xac nhan mat khau khong khop");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay nguoi dung: " + username));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Mat khau hien tai khong chinh xac");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        log.info("Password changed: username={}", username);
+    }
+
+    @Override
+    public void logout() {
+        SecurityContextHolder.clearContext();
+        log.info("User logged out successfully");
+    }
+}

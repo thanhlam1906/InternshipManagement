@@ -7,6 +7,8 @@ import com.example.internshipmanagement.entity.AssessmentRound;
 import com.example.internshipmanagement.entity.EvaluationCriterion;
 import com.example.internshipmanagement.entity.RoundCriterion;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
+import com.example.internshipmanagement.exception.ResourceConflictException;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.mapper.RoundCriterionMapper;
 import com.example.internshipmanagement.repository.AssessmentRoundRepository;
 import com.example.internshipmanagement.repository.IEvaluationCriterionRepository;
@@ -15,6 +17,8 @@ import com.example.internshipmanagement.service.RoundCriterionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,6 +55,10 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
         EvaluationCriterion criterion = evaluationCriterionRepository.findById(request.getCriterionId())
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay tieu chi co id: " + request.getCriterionId()));
 
+        if (roundCriterionRepository.existsByRoundIdAndCriterionId(request.getRoundId(), request.getCriterionId())) {
+            throw new ResourceConflictException("Tieu chi nay da ton tai trong dot danh gia");
+        }
+
         RoundCriterion roundCriterion = RoundCriterion.builder()
                 .round(round)
                 .criterion(criterion)
@@ -75,11 +83,17 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
     }
 
     @Override
+    @Transactional
     public Void deleteRoundCriterion(Integer id) {
         RoundCriterion roundCriterion = roundCriterionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay tieu chi trong vong danh gia voi id: " + id));
 
-        roundCriterionRepository.delete(roundCriterion);
+        try {
+            roundCriterionRepository.delete(roundCriterion);
+            roundCriterionRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
         log.info("Round criterion deleted: id={}", id);
         return null;
     }

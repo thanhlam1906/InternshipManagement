@@ -23,4 +23,8 @@ public interface IInternshipAssignmentRepository extends JpaRepository<Internshi
     Page<InternshipAssignment> findByPhaseId(Integer phaseId, Pageable pageable);
 
     boolean existsByStudentIdAndPhaseId(Integer studentId, Integer phaseId);
+
+    boolean existsByStudentIdAndStatusIn(Integer studentId, java.util.List<com.example.internshipmanagement.entity.enums.AssignmentStatus> statuses);
+
+    boolean existsByMentorIdAndStatusIn(Integer mentorId, java.util.List<com.example.internshipmanagement.entity.enums.AssignmentStatus> statuses);
 }

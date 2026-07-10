@@ -13,8 +13,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.example.internshipmanagement.entity.enums.Role;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
@@ -106,9 +109,15 @@ public class UserImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Integer id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay nguoi dung voi id: " + id));
-        userRepository.delete(user);
+        try {
+            userRepository.delete(user);
+            userRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
         log.info("User deleted: id={}", id);
     }
 }

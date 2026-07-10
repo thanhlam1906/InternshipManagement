@@ -8,14 +8,17 @@ import com.example.internshipmanagement.dto.response.mentor.MentorSummaryRespons
 import com.example.internshipmanagement.entity.Mentor;
 import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.Role;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.mapper.MentorMapper;
+import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
 import com.example.internshipmanagement.repository.IMentorRepository;
 import com.example.internshipmanagement.repository.IStudentRepository;
 import com.example.internshipmanagement.repository.IUserRepository;
 import com.example.internshipmanagement.service.MentorService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,7 @@ public class MentorServiceImpl implements MentorService {
     private final IMentorRepository mentorRepository;
     private final IStudentRepository studentRepository;
     private final IUserRepository userRepository;
+    private final IInternshipAssignmentRepository internshipAssignmentRepository;
     private final MentorMapper mentorMapper;
 
     @Override
@@ -114,7 +118,26 @@ public class MentorServiceImpl implements MentorService {
         return mentorMapper.toMentorResponse(mentor);
     }
 
+    @Override
+    @Transactional
+    public void deleteMentor(Integer id) {
+        Mentor mentor = mentorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay mentor voi id: " + id));
+
+        if (internshipAssignmentRepository.existsByMentorId(id)) {
+            throw new ResourceConflictException("Khong the xoa mentor dang co lich su phan cong thuc tap");
+        }
+
+        User user = mentor.getUser();
+        try {
+            mentorRepository.delete(mentor);
+            mentorRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
+
+        user.setIsActive(false);
+        userRepository.save(user);
+        log.info("Mentor profile deleted: id={}, user deactivated", id);
+    }
 }
-
-
-

@@ -26,11 +26,13 @@ public class InternshipAssignmentController {
     @GetMapping
     public ResponseEntity<ApiDataResponse<PaginatedResponse<InternshipAssignmentResponse>>> getAssignments(
             @RequestParam(required = false) Integer phaseId,
+            @RequestParam(required = false) Integer studentId,
+            @RequestParam(required = false) Integer mentorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<InternshipAssignmentResponse> assignmentsPage = internshipAssignmentService.getAssignments(phaseId, pageable);
+        Page<InternshipAssignmentResponse> assignmentsPage = internshipAssignmentService.getAssignments(phaseId, studentId, mentorId, pageable);
 
         PaginatedResponse<InternshipAssignmentResponse> data = PaginatedResponse.<InternshipAssignmentResponse>builder()
                 .items(assignmentsPage.getContent())
@@ -93,6 +95,17 @@ public class InternshipAssignmentController {
                 .success(true)
                 .message("Cập nhật trạng thái phân công thực tập thành công")
                 .data(response)
+                .build());
+    }
+
+    @DeleteMapping("/{assignment_id}")
+    public ResponseEntity<ApiDataResponse<Void>> deleteAssignment(
+            @PathVariable("assignment_id") Integer id) {
+        internshipAssignmentService.deleteAssignment(id);
+        return ResponseEntity.ok(ApiDataResponse.<Void>builder()
+                .success(true)
+                .message("Xoa phan cong thuc tap thanh cong")
+                .data(null)
                 .build());
     }
 }

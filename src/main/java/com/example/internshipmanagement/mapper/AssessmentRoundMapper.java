@@ -9,7 +9,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, uses = {RoundCriterionMapper.class})
 public interface AssessmentRoundMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -17,15 +17,18 @@ public interface AssessmentRoundMapper {
     @Mapping(target = "isActive", constant = "true")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "roundCriteria", ignore = true)
     AssessmentRound toEntity(AssessmentRoundCreateRequest request);
 
     @Mapping(source = "phase.id", target = "phaseId")
+    @Mapping(source = "roundCriteria", target = "criteria")
     AssessmentRoundResponse toResponse(AssessmentRound entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "phase", ignore = true) // Will be set in service if phaseId is provided
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "roundCriteria", ignore = true)
     void updateEntity(@MappingTarget AssessmentRound entity, AssessmentRoundUpdateRequest request);
 }
 

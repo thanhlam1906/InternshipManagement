@@ -25,11 +25,14 @@ public class AssessmentResultController {
     @GetMapping
     public ResponseEntity<ApiDataResponse<PaginatedResponse<AssessmentResultResponse>>> getAssessmentResults(
             @RequestParam(required = false) Integer assignmentId,
+            @RequestParam(required = false) Integer studentId,
+            @RequestParam(required = false) Integer mentorId,
+            @RequestParam(required = false) Integer roundId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<AssessmentResultResponse> resultsPage = assessmentResultService.getAssessmentResults(assignmentId, pageable);
+        Page<AssessmentResultResponse> resultsPage = assessmentResultService.getAssessmentResults(assignmentId, studentId, mentorId, roundId, pageable);
 
         PaginatedResponse<AssessmentResultResponse> data = PaginatedResponse.<AssessmentResultResponse>builder()
                 .items(resultsPage.getContent())
@@ -45,6 +48,17 @@ public class AssessmentResultController {
                 .success(true)
                 .message("Lấy danh sách kết quả đánh giá thành công")
                 .data(data)
+                .build());
+    }
+
+    @GetMapping("/{result_id}")
+    public ResponseEntity<ApiDataResponse<AssessmentResultResponse>> getAssessmentResultById(
+            @PathVariable("result_id") Integer id) {
+        AssessmentResultResponse response = assessmentResultService.getAssessmentResultById(id);
+        return ResponseEntity.ok(ApiDataResponse.<AssessmentResultResponse>builder()
+                .success(true)
+                .message("Lấy chi tiết kết quả đánh giá thành công")
+                .data(response)
                 .build());
     }
 
@@ -69,6 +83,17 @@ public class AssessmentResultController {
                 .success(true)
                 .message("Cập nhật kết quả đánh giá thành công")
                 .data(response)
+                .build());
+    }
+
+    @DeleteMapping("/{result_id}")
+    public ResponseEntity<ApiDataResponse<Void>> deleteAssessmentResult(
+            @PathVariable("result_id") Integer id) {
+        assessmentResultService.deleteAssessmentResult(id);
+        return ResponseEntity.ok(ApiDataResponse.<Void>builder()
+                .success(true)
+                .message("Xóa kết quả đánh giá thành công")
+                .data(null)
                 .build());
     }
 }

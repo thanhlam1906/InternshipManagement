@@ -23,4 +23,11 @@ public interface IAssessmentResultRepository extends JpaRepository<AssessmentRes
     Page<AssessmentResult> findByAssignmentMentorId(Integer mentorId, Pageable pageable);
 
     boolean existsByAssignmentIdAndRoundIdAndCriterionId(Integer assignmentId, Integer roundId, Integer criterionId);
+
+    long countByAssignmentId(Integer assignmentId);
+
+    boolean existsByAssignmentId(Integer assignmentId);
+
+    @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})
+    Page<AssessmentResult> findByRoundId(Integer roundId, Pageable pageable);
 }

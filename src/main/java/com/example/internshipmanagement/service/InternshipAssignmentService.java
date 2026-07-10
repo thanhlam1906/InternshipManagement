@@ -7,9 +7,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface InternshipAssignmentService {
-    Page<InternshipAssignmentResponse> getAssignments(Integer phaseId, Pageable pageable);
+    Page<InternshipAssignmentResponse> getAssignments(Integer phaseId, Integer studentId, Integer mentorId, Pageable pageable);
     InternshipAssignmentResponse getAssignmentById(Integer id);
     InternshipAssignmentResponse createAssignment(InternshipAssignmentCreateRequest request);
     InternshipAssignmentResponse updateAssignment(Integer id, com.example.internshipmanagement.dto.request.assignment.InternshipAssignmentUpdateRequest request);
     InternshipAssignmentResponse updateAssignmentStatus(Integer id, InternshipAssignmentStatusUpdateRequest request);
+    void deleteAssignment(Integer id);
 }

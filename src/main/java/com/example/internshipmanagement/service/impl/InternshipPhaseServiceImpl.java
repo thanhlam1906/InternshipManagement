@@ -4,6 +4,7 @@ import com.example.internshipmanagement.dto.request.phase.InternshipPhaseCreateR
 import com.example.internshipmanagement.dto.request.phase.InternshipPhaseUpdateRequest;
 import com.example.internshipmanagement.dto.response.phase.InternshipPhaseResponse;
 import com.example.internshipmanagement.entity.InternshipPhase;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import com.example.internshipmanagement.mapper.InternshipPhaseMapper;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Slf4j
 @Service
@@ -60,10 +63,16 @@ public class InternshipPhaseServiceImpl implements InternshipPhaseService {
     }
 
     @Override
+    @Transactional
     public void deleteInternshipPhase(Integer id) {
         InternshipPhase internshipPhase = internshipPhaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay dot thuc tap voi id: " + id));
-        internshipPhaseRepository.delete(internshipPhase);
+        try {
+            internshipPhaseRepository.delete(internshipPhase);
+            internshipPhaseRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
         log.info("Internship phase deleted: id={}", id);
     }
 }

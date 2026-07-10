@@ -4,6 +4,7 @@ import com.example.internshipmanagement.dto.request.criterion.EvaluationCriterio
 import com.example.internshipmanagement.dto.request.criterion.EvaluationCriterionUpdateRequest;
 import com.example.internshipmanagement.dto.response.evaluation_criterion.EvaluationCriterionResponse;
 import com.example.internshipmanagement.entity.EvaluationCriterion;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import com.example.internshipmanagement.mapper.EvaluationCriterionMapper;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -72,7 +74,12 @@ public class EvaluationCriterionServiceImpl implements EvaluationCriterionServic
     public void deleteCriterion(Integer id) {
         EvaluationCriterion criterion = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay tieu chi danh gia voi id: " + id));
-        repository.delete(criterion);
+        try {
+            repository.delete(criterion);
+            repository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
         log.info("Evaluation criterion deleted: id={}", id);
     }
 }

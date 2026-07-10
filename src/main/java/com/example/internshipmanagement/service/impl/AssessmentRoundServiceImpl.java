@@ -9,6 +9,9 @@ import com.example.internshipmanagement.entity.InternshipPhase;
 import com.example.internshipmanagement.entity.EvaluationCriterion;
 import com.example.internshipmanagement.entity.RoundCriterion;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
+import com.example.internshipmanagement.exception.ResourceConflictException;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.example.internshipmanagement.mapper.AssessmentRoundMapper;
 import com.example.internshipmanagement.repository.AssessmentRoundRepository;
 import com.example.internshipmanagement.repository.IEvaluationCriterionRepository;
@@ -88,6 +91,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
         assessmentRound.setPhase(phase);
         
         AssessmentRound savedRound = assessmentRoundRepository.save(assessmentRound);
+        java.util.List<RoundCriterion> createdCriteria = new java.util.ArrayList<>();
 
         for (RoundCriterionRequest criterionReq : request.getCriteria()) {
             EvaluationCriterion criterion = evaluationCriterionRepository.findById(criterionReq.getCriterionId())
@@ -99,8 +103,10 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
                     .weight(criterionReq.getWeight())
                     .build();
             
-            roundCriterionRepository.save(roundCriterion);
+            createdCriteria.add(roundCriterionRepository.save(roundCriterion));
         }
+
+        savedRound.setRoundCriteria(createdCriteria);
 
         log.info("Assessment round created: id={}, phaseId={}, criteriaCount={}",
                 savedRound.getId(), request.getPhaseId(), request.getCriteria().size());
@@ -126,6 +132,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
     }
 
     @Override
+    @Transactional
     public Void deleteAssessmentRound(Integer id) {
         AssessmentRound assessmentRound = assessmentRoundRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay dot danh gia id: " + id));
@@ -135,7 +142,12 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
             roundCriterionRepository.deleteAll(roundCriteria);
         }
 
-        assessmentRoundRepository.delete(assessmentRound);
+        try {
+            assessmentRoundRepository.delete(assessmentRound);
+            assessmentRoundRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException("Không thể xóa dữ liệu này vì đang được tham chiếu hoặc sử dụng bởi các dữ liệu khác.");
+        }
         log.info("Assessment round deleted: id={}, removedCriteriaCount={}", id, roundCriteria.size());
         return null;
     }

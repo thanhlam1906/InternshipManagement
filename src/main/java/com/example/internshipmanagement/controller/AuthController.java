@@ -1,6 +1,7 @@
 package com.example.internshipmanagement.controller;
 
 import com.example.internshipmanagement.dto.request.auth.LoginRequest;
+import com.example.internshipmanagement.dto.request.auth.ChangePasswordRequest;
 import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
 import com.example.internshipmanagement.dto.response.auth.LoginResponse;
 import com.example.internshipmanagement.dto.response.user.UserResponse;
@@ -45,5 +46,31 @@ public class AuthController {
 
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
-}
 
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiDataResponse<Void>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(request);
+
+        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
+                .success(true)
+                .message("Doi mat khau thanh cong")
+                .httpStatus(HttpStatus.OK)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiDataResponse<Void>> logout() {
+        authService.logout();
+
+        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
+                .success(true)
+                .message("Dang xuat thanh cong")
+                .httpStatus(HttpStatus.OK)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+}

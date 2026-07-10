@@ -2,9 +2,11 @@ package com.example.internshipmanagement.advice;
 
 import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
 import com.example.internshipmanagement.dto.response.common.ValidationError;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -78,6 +80,19 @@ public class GlobalExceptionHandler {
         ApiDataResponse<String> response = ApiDataResponse.<String>builder()
                 .success(false)
                 .message(ex.getMessage())
+                .httpStatus(HttpStatus.CONFLICT)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiDataResponse<String>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", ex.getMessage());
+
+        ApiDataResponse<String> response = ApiDataResponse.<String>builder()
+                .success(false)
+                .message(ErrorMessages.REFERENCED_DATA_DELETE)
                 .httpStatus(HttpStatus.CONFLICT)
                 .build();
 
@@ -172,7 +187,7 @@ public class GlobalExceptionHandler {
 
         ApiDataResponse<String> response = ApiDataResponse.<String>builder()
                 .success(false)
-                .message("Loi bat ngo xay ra: " + ex.getMessage())
+                .message(ErrorMessages.UNEXPECTED_ERROR)
                 .httpStatus(HttpStatus.INTERNAL_SERVER_ERROR)
                 .build();
 

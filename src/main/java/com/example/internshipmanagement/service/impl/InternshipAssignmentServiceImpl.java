@@ -11,6 +11,7 @@ import com.example.internshipmanagement.entity.Mentor;
 import com.example.internshipmanagement.entity.Student;
 import com.example.internshipmanagement.entity.enums.AssignmentStatus;
 import com.example.internshipmanagement.entity.enums.Role;
+import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import com.example.internshipmanagement.mapper.InternshipAssignmentMapper;
@@ -18,6 +19,7 @@ import com.example.internshipmanagement.repository.IInternshipAssignmentReposito
 import com.example.internshipmanagement.repository.IInternshipPhaseRepository;
 import com.example.internshipmanagement.repository.IMentorRepository;
 import com.example.internshipmanagement.repository.IStudentRepository;
+import com.example.internshipmanagement.repository.IAssessmentResultRepository;
 import com.example.internshipmanagement.service.InternshipAssignmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Slf4j
 @Service
@@ -36,10 +40,11 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
     private final IStudentRepository studentRepository;
     private final IMentorRepository mentorRepository;
     private final IInternshipPhaseRepository internshipPhaseRepository;
+    private final IAssessmentResultRepository assessmentResultRepository;
     private final InternshipAssignmentMapper internshipAssignmentMapper;
 
     @Override
-    public Page<InternshipAssignmentResponse> getAssignments(Integer phaseId, Pageable pageable) {
+    public Page<InternshipAssignmentResponse> getAssignments(Integer phaseId, Integer studentId, Integer mentorId, Pageable pageable) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Role role = userDetails.getRole();
@@ -48,7 +53,11 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
         Page<InternshipAssignment> assignmentsPage;
 
         if (role == Role.ADMIN) {
-            if (phaseId != null) {
+            if (studentId != null) {
+                assignmentsPage = internshipAssignmentRepository.findByStudentId(studentId, pageable);
+            } else if (mentorId != null) {
+                assignmentsPage = internshipAssignmentRepository.findByMentorId(mentorId, pageable);
+            } else if (phaseId != null) {
                 assignmentsPage = internshipAssignmentRepository.findByPhaseId(phaseId, pageable);
             } else {
                 assignmentsPage = internshipAssignmentRepository.findAll(pageable);
@@ -165,5 +174,24 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
         InternshipAssignment updated = internshipAssignmentRepository.save(assignment);
         log.info("Assignment status updated: id={}, newStatus={}", id, request.getStatus());
         return internshipAssignmentMapper.toResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAssignment(Integer id) {
+        InternshipAssignment assignment = internshipAssignmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("khong tim thay phan cong co id: " + id));
+
+        if (assessmentResultRepository.existsByAssignmentId(id)) {
+            throw new ResourceConflictException("Khong the xoa phan cong da co ket qua danh gia");
+        }
+
+        try {
+            internshipAssignmentRepository.delete(assignment);
+            internshipAssignmentRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
+        }
+        log.info("Assignment deleted: id={}", id);
     }
 }

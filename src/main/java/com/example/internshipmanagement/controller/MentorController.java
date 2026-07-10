@@ -96,5 +96,19 @@ public class MentorController {
 
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
+
+    @DeleteMapping("/{mentor_id}")
+    public ResponseEntity<ApiDataResponse<Void>> deleteMentor(
+            @PathVariable("mentor_id") Integer mentorId) {
+        mentorService.deleteMentor(mentorId);
+
+        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
+                .success(true)
+                .message("Xoa thong tin mentor thanh cong")
+                .httpStatus(HttpStatus.OK)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
 }
 
