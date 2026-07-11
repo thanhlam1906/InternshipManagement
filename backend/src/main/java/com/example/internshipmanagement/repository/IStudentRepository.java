@@ -30,6 +30,10 @@ public interface IStudentRepository extends JpaRepository<Student, Integer> {
     @EntityGraph(attributePaths = {"user"})
     List<Student> findAll();
 
+    @Override
+    @EntityGraph(attributePaths = {"user"})
+    Page<Student> findAll(Pageable pageable);
+
     @Query("SELECT COUNT(a) > 0 FROM InternshipAssignment a " +
            "WHERE a.student.id = :studentId AND a.mentor.id = :mentorId")
     boolean isStudentAssignedToMentor(@Param("studentId") Integer studentId, @Param("mentorId") Integer mentorId);

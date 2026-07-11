@@ -11,7 +11,7 @@ import java.util.List;
 
 @Repository
 public interface RoundCriterionRepository extends JpaRepository<RoundCriterion, Integer> {
-    @EntityGraph(attributePaths = {"criterion"})
+    @EntityGraph(attributePaths = {"round", "criterion"})
     List<RoundCriterion> findByRoundId(Integer roundId);
 
     boolean existsByRoundIdAndCriterionId(Integer roundId, Integer criterionId);

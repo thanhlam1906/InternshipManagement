@@ -47,6 +47,10 @@ public class JwtUtil {
         return parseClaims(token).get("role", String.class);
     }
 
+    public Date getExpirationFromToken(String token) {
+        return parseClaims(token).getExpiration();
+    }
+
     public boolean validateToken(String token) {
         try {
             if (token == null || token.isBlank()) {

@@ -7,19 +7,25 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface IAssessmentResultRepository extends JpaRepository<AssessmentResult, Integer> {
     @Override
-    @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})
+    @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
+    List<AssessmentResult> findAll();
+
+    @Override
+    @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
     Page<AssessmentResult> findAll(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})
+    @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
     Page<AssessmentResult> findByAssignmentId(Integer assignmentId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})
+    @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
     Page<AssessmentResult> findByAssignmentStudentId(Integer studentId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})
+    @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
     Page<AssessmentResult> findByAssignmentMentorId(Integer mentorId, Pageable pageable);
 
     boolean existsByAssignmentIdAndRoundIdAndCriterionId(Integer assignmentId, Integer roundId, Integer criterionId);
@@ -30,6 +36,6 @@ public interface IAssessmentResultRepository extends JpaRepository<AssessmentRes
 
     boolean existsByAssignmentId(Integer assignmentId);
 
-    @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})
+    @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
     Page<AssessmentResult> findByRoundId(Integer roundId, Pageable pageable);
 }

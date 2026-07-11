@@ -1,5 +1,6 @@
 package com.example.internshipmanagement.service.impl;
 
+import com.example.internshipmanagement.config.TokenBlacklist;
 import com.example.internshipmanagement.dto.request.auth.LoginRequest;
 import com.example.internshipmanagement.dto.request.auth.ChangePasswordRequest;
 import com.example.internshipmanagement.dto.response.auth.LoginResponse;
@@ -8,6 +9,7 @@ import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.repository.IUserRepository;
 import com.example.internshipmanagement.service.AuthService;
 import com.example.internshipmanagement.ulti.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 
+import java.time.Instant;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,8 @@ public class AuthServiceImpl implements AuthService {
     private final IUserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final HttpServletRequest request;
+    private final TokenBlacklist tokenBlacklist;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -110,7 +116,22 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout() {
+        String token = extractTokenFromRequest();
+        if (token != null) {
+            String tokenHash = com.example.internshipmanagement.config.JwtAuthenticationFilter.hashToken(token);
+            Instant expiry = jwtUtil.getExpirationFromToken(token).toInstant();
+            tokenBlacklist.blacklist(tokenHash, expiry);
+            log.info("Token blacklisted until {}", expiry);
+        }
         SecurityContextHolder.clearContext();
         log.info("User logged out successfully");
+    }
+
+    private String extractTokenFromRequest() {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 }

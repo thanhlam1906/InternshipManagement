@@ -7,8 +7,14 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface IInternshipAssignmentRepository extends JpaRepository<InternshipAssignment, Integer> {
+    @Override
+    @EntityGraph(attributePaths = {"student", "student.user", "mentor", "mentor.user", "phase"})
+    List<InternshipAssignment> findAll();
+
     @Override
     @EntityGraph(attributePaths = {"student", "student.user", "mentor", "mentor.user", "phase"})
     Page<InternshipAssignment> findAll(Pageable pageable);
