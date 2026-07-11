@@ -9,6 +9,7 @@ import com.example.internshipmanagement.entity.enums.AssignmentStatus;
 import com.example.internshipmanagement.entity.enums.Role;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import com.example.internshipmanagement.mapper.AssessmentResultMapper;
 import com.example.internshipmanagement.repository.*;
 import com.example.internshipmanagement.service.AssessmentResultService;
@@ -16,8 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,8 +40,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
     @Override
     public Page<AssessmentResultResponse> getAssessmentResults(Integer assignmentId, Integer studentId,
             Integer mentorId, Integer roundId, Pageable pageable) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer currentUserId = userDetails.getUserId();
 
@@ -65,7 +64,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("khong tim thay phan cong co id: " + assignmentId));
                 if (!assignment.getMentor().getId().equals(currentUserId)) {
-                    throw new ResourceNotFoundException("khong tim thay phan cong co id: " + assignmentId);
+                    throw new AccessDeniedException("Ban khong co quyen truy cap ket qua danh gia cua phan cong nay");
                 }
                 resultsPage = assessmentResultRepository.findByAssignmentId(assignmentId, pageable);
             } else {
@@ -77,14 +76,14 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
                         .orElseThrow(
                                 () -> new ResourceNotFoundException("khong tim thay phan cong co id: " + assignmentId));
                 if (!assignment.getStudent().getId().equals(currentUserId)) {
-                    throw new ResourceNotFoundException("khong tim thay phan cong co id: " + assignmentId);
+                    throw new AccessDeniedException("Ban khong co quyen truy cap ket qua danh gia cua phan cong nay");
                 }
                 resultsPage = assessmentResultRepository.findByAssignmentId(assignmentId, pageable);
             } else {
                 resultsPage = assessmentResultRepository.findByAssignmentStudentId(currentUserId, pageable);
             }
         } else {
-            throw new IllegalArgumentException("Khong co quyen truy cap");
+            throw new AccessDeniedException("Khong co quyen truy cap");
         }
 
         return resultsPage.map(assessmentResultMapper::toResponse);
@@ -95,18 +94,17 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
         AssessmentResult result = assessmentResultRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay ket qua danh gia voi id: " + id));
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer currentUserId = userDetails.getUserId();
 
         if (role == Role.MENTOR) {
             if (!result.getAssignment().getMentor().getId().equals(currentUserId)) {
-                throw new ResourceNotFoundException("khong tim thay ket qua danh gia voi id: " + id);
+                throw new AccessDeniedException("Ban khong co quyen xem ket qua danh gia nay");
             }
         } else if (role == Role.STUDENT) {
             if (!result.getAssignment().getStudent().getId().equals(currentUserId)) {
-                throw new ResourceNotFoundException("khong tim thay ket qua danh gia voi id: " + id);
+                throw new AccessDeniedException("Ban khong co quyen xem ket qua danh gia nay");
             }
         }
 
@@ -116,8 +114,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
     @Override
     @Transactional
     public AssessmentResultResponse createAssessmentResult(AssessmentResultCreateRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Integer currentUserId = userDetails.getUserId();
 
         InternshipAssignment assignment = internshipAssignmentRepository.findById(request.getAssignmentId())
@@ -125,7 +122,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
                         "khong tim thay phan cong co id: " + request.getAssignmentId()));
 
         if (!assignment.getMentor().getId().equals(currentUserId)) {
-            throw new IllegalArgumentException("Ban khong phai mentor duoc phan cong cho sinh vien nay");
+            throw new AccessDeniedException("Ban khong phai mentor duoc phan cong cho sinh vien nay");
         }
 
         AssessmentRound round = assessmentRoundRepository.findById(request.getRoundId())
@@ -138,12 +135,12 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
 
         // Verify that the criterion is linked to the round
         if (!roundCriterionRepository.existsByRoundIdAndCriterionId(request.getRoundId(), request.getCriterionId())) {
-            throw new IllegalArgumentException("Tieu chi nay khong thuoc vong danh gia da chon");
+            throw new ResourceConflictException("Tieu chi nay khong thuoc vong danh gia da chon");
         }
 
         // Verify that score does not exceed maxScore
         if (request.getScore().compareTo(criterion.getMaxScore()) > 0) {
-            throw new IllegalArgumentException(
+            throw new ResourceConflictException(
                     "Diem so khong duoc vuot qua diem so toi da cua tieu chi (" + criterion.getMaxScore() + ")");
         }
 
@@ -192,19 +189,18 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
     @Override
     @Transactional
     public AssessmentResultResponse updateAssessmentResult(Integer id, AssessmentResultUpdateRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Integer currentUserId = userDetails.getUserId();
 
         AssessmentResult result = assessmentResultRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay ket qua danh gia voi id: " + id));
 
         if (!result.getEvaluatedBy().getUserId().equals(currentUserId)) {
-            throw new IllegalArgumentException("Ban chi co the cap nhat ket qua danh gia do chinh ban tao");
+            throw new AccessDeniedException("Ban chi co the cap nhat ket qua danh gia do chinh ban tao");
         }
 
         if (request.getScore().compareTo(result.getCriterion().getMaxScore()) > 0) {
-            throw new IllegalArgumentException("Diem so khong duoc vuot qua diem so toi da cua tieu chi ("
+            throw new ResourceConflictException("Diem so khong duoc vuot qua diem so toi da cua tieu chi ("
                     + result.getCriterion().getMaxScore() + ")");
         }
 
@@ -220,8 +216,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
     @Override
     @Transactional
     public void deleteAssessmentResult(Integer id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Integer currentUserId = userDetails.getUserId();
         Role role = userDetails.getRole();
 
@@ -229,7 +224,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay ket qua danh gia voi id: " + id));
 
         if (role != Role.ADMIN && !result.getEvaluatedBy().getUserId().equals(currentUserId)) {
-            throw new IllegalArgumentException("Ban chi co the xoa ket qua danh gia do chinh ban tao");
+            throw new AccessDeniedException("Ban chi co the xoa ket qua danh gia do chinh ban tao");
         }
 
         InternshipAssignment assignment = result.getAssignment();

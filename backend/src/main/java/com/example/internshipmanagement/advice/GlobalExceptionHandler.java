@@ -116,6 +116,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    // Note: This handler is unreachable when CustomAccessDeniedHandler is configured
+    // in SecurityConfig. It serves as a fallback in case that handler is removed.
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiDataResponse<String>> handleAccessDeniedException(AccessDeniedException ex) {
         log.warn("Access denied: {}", ex.getMessage());
@@ -129,6 +131,10 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
 
+    // Note: BadCredentialsException/DisabledException may also be caught by
+    // Spring Security's AuthenticationEntryPoint before reaching this handler.
+    // This handler serves as a fallback for scenarios where those exceptions
+    // propagate to the controller layer.
     @ExceptionHandler({
             BadCredentialsException.class,
             DisabledException.class

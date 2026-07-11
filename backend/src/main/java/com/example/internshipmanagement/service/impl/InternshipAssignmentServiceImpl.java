@@ -14,6 +14,7 @@ import com.example.internshipmanagement.entity.enums.Role;
 import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import com.example.internshipmanagement.mapper.InternshipAssignmentMapper;
 import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
 import com.example.internshipmanagement.repository.IInternshipPhaseRepository;
@@ -25,8 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,8 +45,7 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
 
     @Override
     public Page<InternshipAssignmentResponse> getAssignments(Integer phaseId, Integer studentId, Integer mentorId, Pageable pageable) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer currentUserId = userDetails.getUserId();
 
@@ -67,7 +66,7 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
         } else if (role == Role.STUDENT) {
             assignmentsPage = internshipAssignmentRepository.findByStudentId(currentUserId, pageable);
         } else {
-            throw new IllegalArgumentException("Khong co quyen truy cap");
+            throw new AccessDeniedException("Khong co quyen truy cap");
         }
 
         return assignmentsPage.map(internshipAssignmentMapper::toResponse);
@@ -78,17 +77,16 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
         InternshipAssignment assignment = internshipAssignmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay phan cong co id: " + id));
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer currentUserId = userDetails.getUserId();
 
         if (role != Role.ADMIN) {
             if (role == Role.MENTOR && !assignment.getMentor().getId().equals(currentUserId)) {
-                throw new ResourceNotFoundException("khong tim thay phan cong co id: " + id);
+                throw new AccessDeniedException("Ban khong co quyen xem phan cong nay");
             }
             if (role == Role.STUDENT && !assignment.getStudent().getId().equals(currentUserId)) {
-                throw new ResourceNotFoundException("khong tim thay phan cong co id: " + id);
+                throw new AccessDeniedException("Ban khong co quyen xem phan cong nay");
             }
         }
 

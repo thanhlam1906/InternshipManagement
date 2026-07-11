@@ -79,18 +79,59 @@ public class LoggingFilter extends OncePerRequestFilter {
 
     /**
      * Lấy IP thực của client, hỗ trợ proxy/load balancer.
+     *
+     * IMPORTANT: X-Forwarded-For trust is dev-only. In production, this header
+     * must only be trusted when the request comes from a known proxy/load-balancer
+     * (e.g. nginx, AWS ALB) — otherwise any client can spoof it.
      */
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip != null && !ip.isBlank()) {
-            // X-Forwarded-For có thể chứa nhiều IP, lấy IP đầu tiên
-            return ip.split(",")[0].trim();
+        String remoteAddr = request.getRemoteAddr();
+
+        // Only trust proxy headers from localhost/private-network sources.
+        // External clients could spoof X-Forwarded-For; fall back to remoteAddr.
+        boolean fromTrustedProxy = isPrivateAddress(remoteAddr);
+
+        if (fromTrustedProxy) {
+            String ip = request.getHeader("X-Forwarded-For");
+            if (ip != null && !ip.isBlank()) {
+                // X-Forwarded-For có thể chứa nhiều IP, lấy IP đầu tiên
+                return ip.split(",")[0].trim();
+            }
+            ip = request.getHeader("X-Real-IP");
+            if (ip != null && !ip.isBlank()) {
+                return ip;
+            }
         }
-        ip = request.getHeader("X-Real-IP");
-        if (ip != null && !ip.isBlank()) {
-            return ip;
+        return remoteAddr;
+    }
+
+    /**
+     * Checks whether an IP address is a private/internal address (localhost, RFC 1918).
+     */
+    private boolean isPrivateAddress(String ip) {
+        if (ip == null) {
+            return false;
         }
-        return request.getRemoteAddr();
+        // Localhost (IPv4 and IPv6)
+        if (ip.equals("127.0.0.1") || ip.equals("0:0:0:0:0:0:0:1") || ip.equals("::1")) {
+            return true;
+        }
+        // RFC 1918 private ranges: 10.x.x.x, 172.16-31.x.x, 192.168.x.x
+        if (ip.startsWith("10.") || ip.startsWith("192.168.")) {
+            return true;
+        }
+        if (ip.startsWith("172.")) {
+            String[] parts = ip.split("\\.");
+            if (parts.length >= 2) {
+                try {
+                    int secondOctet = Integer.parseInt(parts[1]);
+                    return secondOctet >= 16 && secondOctet <= 31;
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

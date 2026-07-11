@@ -42,7 +42,7 @@ public class OpenAiClient {
         requestFactory.setReadTimeout(READ_TIMEOUT_MS);
 
         this.restClient = RestClient.builder()
-                .baseUrl(properties.getOpenai().getBaseUrl())
+                .baseUrl(properties.getGroq().getBaseUrl())
                 .requestFactory(requestFactory)
                 .build();
     }
@@ -80,7 +80,7 @@ public class OpenAiClient {
     }
 
     private CVReviewResponse doReviewCV(String apiKey, String cvText, String major) {
-        String model = properties.getOpenai().getModel();
+        String model = properties.getGroq().getModel();
         String prompt = buildPrompt(cvText, major);
 
         // Build OpenAI Chat Completions request body

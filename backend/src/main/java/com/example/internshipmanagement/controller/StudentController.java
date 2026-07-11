@@ -18,8 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/students")
 @RequiredArgsConstructor
@@ -105,17 +103,10 @@ public class StudentController {
 
     @DeleteMapping("/{student_id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteStudent(
+    public ResponseEntity<Void> deleteStudent(
             @PathVariable("student_id") @Positive(message = "ID must be positive") Integer studentId) {
         studentService.deleteStudent(studentId);
-
-        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xoa thong tin sinh vien thanh cong")
-                .httpStatus(HttpStatus.OK)
-                .build();
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        return ResponseEntity.noContent().build();
     }
 }
 

@@ -24,8 +24,7 @@ import com.example.internshipmanagement.config.CustomUserDetails;
 import com.example.internshipmanagement.entity.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -39,8 +38,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
     private final RoundCriterionRepository roundCriterionRepository;
     @Override
     public Page<AssessmentRoundResponse> getAssessmentRounds(Integer phase_id, Pageable pageable) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
 
         Page<AssessmentRound> assessmentRoundPage;
@@ -71,8 +69,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
         AssessmentRound assessmentRound = assessmentRoundRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay dot danh gia id: " + id));
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
 
         if (role != Role.ADMIN && !assessmentRound.getIsActive()) {
@@ -135,7 +132,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
 
     @Override
     @Transactional
-    public Void deleteAssessmentRound(Integer id) {
+    public void deleteAssessmentRound(Integer id) {
         AssessmentRound assessmentRound = assessmentRoundRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay dot danh gia id: " + id));
 
@@ -151,6 +148,5 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
             throw new ResourceConflictException("Không thể xóa dữ liệu này vì đang được tham chiếu hoặc sử dụng bởi các dữ liệu khác.");
         }
         log.info("Assessment round deleted: id={}, removedCriteriaCount={}", id, roundCriteria.size());
-        return null;
     }
 }

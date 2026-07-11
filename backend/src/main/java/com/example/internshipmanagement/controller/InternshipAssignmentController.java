@@ -20,7 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/internship_assignments")
+@RequestMapping("/api/internship-assignments")
 @RequiredArgsConstructor
 @Validated
 public class InternshipAssignmentController {
@@ -109,13 +109,9 @@ public class InternshipAssignmentController {
 
     @DeleteMapping("/{assignment_id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteAssignment(
+    public ResponseEntity<Void> deleteAssignment(
             @PathVariable("assignment_id") @Positive(message = "ID must be positive") Integer id) {
         internshipAssignmentService.deleteAssignment(id);
-        return ResponseEntity.ok(ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xoa phan cong thuc tap thanh cong")
-                .data(null)
-                .build());
+        return ResponseEntity.noContent().build();
     }
 }

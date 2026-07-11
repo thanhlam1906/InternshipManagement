@@ -56,7 +56,7 @@ public class JwtUtil {
             parseClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("JWT token da het han: {}", e.getMessage());
+            log.warn("JWT token da het han: {}", e.getMessage());
         } catch (MalformedJwtException e) {
             log.error("JWT token khong dung dinh dang: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {

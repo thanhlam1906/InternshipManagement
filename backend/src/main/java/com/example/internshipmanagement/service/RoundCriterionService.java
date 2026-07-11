@@ -10,5 +10,5 @@ public interface RoundCriterionService {
     RoundCriterionResponse getRoundCriterionById(Integer id);
     RoundCriterionResponse createRoundCriterion(RoundCriterionCreateRequest request);
     RoundCriterionResponse updateRoundCriterion(Integer id, RoundCriterionUpdateRequest request);
-    Void deleteRoundCriterion(Integer id);
+    void deleteRoundCriterion(Integer id);
 }

@@ -135,16 +135,10 @@ public class UserController {
 
     @DeleteMapping("/{user_id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteUser(
+    public ResponseEntity<Void> deleteUser(
             @PathVariable("user_id") @Positive(message = "ID must be positive") Integer userId) {
         userService.deleteUser(userId);
-        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xoa user thanh cong")
-                .data(null)
-                .httpStatus(HttpStatus.OK)
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        return ResponseEntity.noContent().build();
     }
 }
 

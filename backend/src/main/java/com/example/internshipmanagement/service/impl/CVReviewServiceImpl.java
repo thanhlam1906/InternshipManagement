@@ -12,8 +12,7 @@ import com.example.internshipmanagement.service.client.GeminiClient;
 import com.example.internshipmanagement.service.client.OpenAiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -71,9 +70,7 @@ public class CVReviewServiceImpl implements CVReviewService {
     }
 
     private Integer getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return userDetails.getUserId();
+        return CustomUserDetails.getCurrentUserId();
     }
 
     /**

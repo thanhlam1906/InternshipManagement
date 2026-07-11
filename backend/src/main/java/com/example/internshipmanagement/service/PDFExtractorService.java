@@ -85,8 +85,6 @@ public class PDFExtractorService {
                         text.length(), pageCount, originalFilename);
                 return text;
             }
-        } catch (IllegalArgumentException e) {
-            throw e;
         } catch (IOException e) {
             log.error("Failed to extract text from PDF: {}", e.getMessage(), e);
             throw new ExternalApiException("Loi khi doc file PDF: " + e.getMessage(), e);

@@ -19,8 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 
 import com.example.internshipmanagement.exception.ResourceConflictException;
@@ -72,8 +71,7 @@ public class MentorServiceImpl implements MentorService {
 
     @Override
     public MentorResponse getMentorById(Integer id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer userId = userDetails.getUserId();
 
@@ -89,6 +87,10 @@ public class MentorServiceImpl implements MentorService {
             if (!userId.equals(id)) {
                 throw new AccessDeniedException("Ban chi duoc phep xem thong tin cua chinh minh");
             }
+        } else if (role == Role.ADMIN) {
+            // ADMIN được phép xem mọi mentor
+        } else {
+            throw new AccessDeniedException("Khong co quyen truy cap");
         }
 
         return mentorMapper.toMentorResponse(mentor);
@@ -99,7 +101,7 @@ public class MentorServiceImpl implements MentorService {
     public MentorResponse createMentor(MentorCreateRequest request) {
         User user = userRepository.findById(request.getUserId()).orElseThrow(()-> new ResourceNotFoundException("Khong tim thay nguoi dung voi id: " + request.getUserId()));
         if(user.getRole() != Role.MENTOR){
-            throw new IllegalArgumentException("Nguoi dung khong phai giang vien");
+            throw new ResourceConflictException("Nguoi dung khong phai giang vien");
         }
         if(mentorRepository.existsById(request.getUserId())){
             throw new ResourceConflictException("Nguoi dung da duoc tao thong tin giang vien");
@@ -117,8 +119,7 @@ public class MentorServiceImpl implements MentorService {
     @Override
     @Transactional
     public MentorResponse updateMentor(Integer mentorId,MentorUpdateRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer userId = userDetails.getUserId();
         if (role == Role.MENTOR && !mentorId.equals(userId) ){

@@ -11,8 +11,7 @@ import com.example.internshipmanagement.service.JobSearchService;
 import com.example.internshipmanagement.service.client.JSearchClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -63,9 +62,7 @@ public class JobSearchServiceImpl implements JobSearchService {
     }
 
     private Integer getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        return userDetails.getUserId();
+        return CustomUserDetails.getCurrentUserId();
     }
 
     /**
@@ -78,8 +75,7 @@ public class JobSearchServiceImpl implements JobSearchService {
 
         String major = student.getMajor();
         if (major == null || major.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Sinh vien chua cap nhat nganh hoc. Vui long cap nhat thong tin ca nhan truoc.");
+            return "General"; // Default if major not set
         }
 
         return major;

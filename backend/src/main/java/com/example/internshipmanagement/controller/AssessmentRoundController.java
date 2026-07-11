@@ -5,7 +5,6 @@ import com.example.internshipmanagement.dto.request.round.AssessmentRoundUpdateR
 import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
 import com.example.internshipmanagement.dto.response.common.PaginatedResponse;
 import com.example.internshipmanagement.dto.response.round.AssessmentRoundResponse;
-import com.example.internshipmanagement.dto.response.user.UserResponse;
 import com.example.internshipmanagement.service.AssessmentRoundService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -96,12 +95,8 @@ public class AssessmentRoundController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteAssessmentRound(@PathVariable @Positive(message = "ID must be positive") Integer id) {
+    public ResponseEntity<Void> deleteAssessmentRound(@PathVariable @Positive(message = "ID must be positive") Integer id) {
         assessmentRoundService.deleteAssessmentRound(id);
-        return ResponseEntity.ok(ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xóa đợt đánh giá thành công")
-                .data(null)
-                .build());
+        return ResponseEntity.noContent().build();
     }
 }

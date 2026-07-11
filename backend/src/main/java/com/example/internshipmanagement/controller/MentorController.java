@@ -130,17 +130,10 @@ public class MentorController {
 
     @DeleteMapping("/{mentor_id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteMentor(
+    public ResponseEntity<Void> deleteMentor(
             @PathVariable("mentor_id") @Positive(message = "ID must be positive") Integer mentorId) {
         mentorService.deleteMentor(mentorId);
-
-        ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xoa thong tin mentor thanh cong")
-                .httpStatus(HttpStatus.OK)
-                .build();
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        return ResponseEntity.noContent().build();
     }
 }
 

@@ -19,7 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/assessment_results")
+@RequestMapping("/api/assessment-results")
 @RequiredArgsConstructor
 @Validated
 public class AssessmentResultController {
@@ -96,13 +96,9 @@ public class AssessmentResultController {
 
     @DeleteMapping("/{result_id}")
     @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteAssessmentResult(
+    public ResponseEntity<Void> deleteAssessmentResult(
             @PathVariable("result_id") @Positive(message = "ID must be positive") Integer id) {
         assessmentResultService.deleteAssessmentResult(id);
-        return ResponseEntity.ok(ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xóa kết quả đánh giá thành công")
-                .data(null)
-                .build());
+        return ResponseEntity.noContent().build();
     }
 }

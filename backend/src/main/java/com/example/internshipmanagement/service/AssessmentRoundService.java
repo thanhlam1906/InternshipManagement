@@ -12,5 +12,5 @@ public interface AssessmentRoundService {
     AssessmentRoundResponse getAssessmentRoundById(Integer id);
     AssessmentRoundResponse createAssessmentRound(AssessmentRoundCreateRequest request);
     AssessmentRoundResponse updateAssessmentRound(Integer id, AssessmentRoundUpdateRequest request);
-    Void deleteAssessmentRound(Integer id);
+    void deleteAssessmentRound(Integer id);
 }

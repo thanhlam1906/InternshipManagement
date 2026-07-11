@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/round_criteria")
+@RequestMapping("/api/round-criteria")
 @RequiredArgsConstructor
 @Validated
 public class RoundCriterionController {
@@ -75,13 +75,9 @@ public class RoundCriterionController {
 
     @DeleteMapping("/{round_criterion_id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiDataResponse<Void>> deleteRoundCriterion(
+    public ResponseEntity<Void> deleteRoundCriterion(
             @PathVariable("round_criterion_id") @Positive(message = "ID must be positive") Integer id) {
         roundCriterionService.deleteRoundCriterion(id);
-        return ResponseEntity.ok(ApiDataResponse.<Void>builder()
-                .success(true)
-                .message("Xóa tiêu chí khỏi đợt đánh giá thành công")
-                .data(null)
-                .build());
+        return ResponseEntity.noContent().build();
     }
 }

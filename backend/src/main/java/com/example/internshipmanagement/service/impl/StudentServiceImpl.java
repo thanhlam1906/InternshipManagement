@@ -15,8 +15,7 @@ import com.example.internshipmanagement.repository.IInternshipAssignmentReposito
 import com.example.internshipmanagement.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,8 +40,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     @Transactional(readOnly = true)
     public List<StudentResponse> getAllStudents() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer userId = userDetails.getUserId();
 
@@ -52,7 +50,7 @@ public class StudentServiceImpl implements StudentService {
         } else if (role == Role.MENTOR) {
             students = studentRepository.findStudentsByMentorId(userId);
         } else {
-            throw new IllegalArgumentException("Khong co quyen truy cap");
+            throw new AccessDeniedException("Khong co quyen truy cap");
         }
 
         return students.stream()
@@ -63,8 +61,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     @Transactional(readOnly = true)
     public Page<StudentResponse> getAllStudents(Pageable pageable) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer userId = userDetails.getUserId();
 
@@ -74,7 +71,7 @@ public class StudentServiceImpl implements StudentService {
         } else if (role == Role.MENTOR) {
             studentPage = studentRepository.findStudentsByMentorId(userId, pageable);
         } else {
-            throw new IllegalArgumentException("Khong co quyen truy cap");
+            throw new AccessDeniedException("Khong co quyen truy cap");
         }
 
         return studentPage.map(studentMapper::toStudentResponse);
@@ -83,8 +80,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     @Transactional(readOnly = true)
     public StudentResponse getStudentById(Integer id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer userId = userDetails.getUserId();
 
@@ -148,8 +144,7 @@ public class StudentServiceImpl implements StudentService {
     @Override
     @Transactional
     public StudentResponse updateStudent(Integer studentId, StudentUpdateRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = CustomUserDetails.getCurrentUser();
         Role role = userDetails.getRole();
         Integer userId = userDetails.getUserId();
 

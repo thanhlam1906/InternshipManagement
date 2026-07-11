@@ -86,7 +86,7 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
 
     @Override
     @Transactional
-    public Void deleteRoundCriterion(Integer id) {
+    public void deleteRoundCriterion(Integer id) {
         RoundCriterion roundCriterion = roundCriterionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay tieu chi trong vong danh gia voi id: " + id));
 
@@ -97,6 +97,5 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
             throw new ResourceConflictException(ErrorMessages.REFERENCED_DATA_DELETE);
         }
         log.info("Round criterion deleted: id={}", id);
-        return null;
     }
 }
