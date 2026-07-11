@@ -4,6 +4,7 @@ import com.example.internshipmanagement.entity.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -16,6 +17,7 @@ public class UserCreateRequest {
 
     @NotBlank(message = "Ten dang nhap khong duoc de trong")
     @Size(min = 3, max = 50, message = "Ten dang nhap phai tu 3 den 50 ky tu")
+    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Ten dang nhap chi duoc chua chu cai, so, dau gach duoi va dau gach ngang")
     private String username;
 
     @NotBlank(message = "Mat khau khong duoc de trong")

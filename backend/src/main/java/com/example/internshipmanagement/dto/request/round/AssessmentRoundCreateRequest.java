@@ -1,13 +1,16 @@
 package com.example.internshipmanagement.dto.request.round;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import jakarta.validation.Valid;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,8 +33,12 @@ public class AssessmentRoundCreateRequest {
 
     private String description;
 
-    @NotNull(message = "Danh sach tieu chi khong duoc de trong")
+    @NotEmpty(message = "Danh sach tieu chi khong duoc de trong")
     @Valid
     private List<RoundCriterionRequest> criteria;
 
+    @AssertTrue(message = "startDate must be before endDate")
+    public boolean isDateRangeValid() {
+        return startDate != null && endDate != null && startDate.isBefore(endDate);
+    }
 }

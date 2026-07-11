@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +56,18 @@ public class MentorServiceImpl implements MentorService {
         return mentors.stream()
                 .map(mentorMapper::toMentorSummaryResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<MentorResponse> getAllMentors(Pageable pageable) {
+        Page<Mentor> mentorPage = mentorRepository.findAll(pageable);
+        return mentorPage.map(mentorMapper::toMentorResponse);
+    }
+
+    @Override
+    public Page<MentorSummaryResponse> getAllMentorsSummary(Pageable pageable) {
+        Page<Mentor> mentorPage = mentorRepository.findAll(pageable);
+        return mentorPage.map(mentorMapper::toMentorSummaryResponse);
     }
 
     @Override

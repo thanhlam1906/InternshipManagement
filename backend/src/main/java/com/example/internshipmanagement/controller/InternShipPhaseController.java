@@ -7,22 +7,27 @@ import com.example.internshipmanagement.dto.response.phase.InternshipPhaseRespon
 import com.example.internshipmanagement.dto.response.common.PaginatedResponse;
 import com.example.internshipmanagement.service.InternshipPhaseService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/internship-phases")
 @RequiredArgsConstructor
+@Validated
 public class InternShipPhaseController {
 
     private final InternshipPhaseService internshipPhaseService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<PaginatedResponse<InternshipPhaseResponse>>> getAllInternshipPhases(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -50,8 +55,9 @@ public class InternShipPhaseController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<InternshipPhaseResponse>> getInternshipPhaseById(
-            @PathVariable("id") Integer id) {
+            @PathVariable("id") @Positive(message = "ID must be positive") Integer id) {
         InternshipPhaseResponse phase = internshipPhaseService.getInternshipPhaseById(id);
 
         ApiDataResponse<InternshipPhaseResponse> apiResponse = ApiDataResponse.<InternshipPhaseResponse>builder()
@@ -65,6 +71,7 @@ public class InternShipPhaseController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<InternshipPhaseResponse>> createInternshipPhase(
             @Valid @RequestBody InternshipPhaseCreateRequest request) {
         InternshipPhaseResponse phase = internshipPhaseService.createInternshipPhase(request);
@@ -80,8 +87,9 @@ public class InternShipPhaseController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<InternshipPhaseResponse>> updateInternshipPhase(
-            @PathVariable("id") Integer id,
+            @PathVariable("id") @Positive(message = "ID must be positive") Integer id,
             @Valid @RequestBody InternshipPhaseUpdateRequest request) {
         InternshipPhaseResponse phase = internshipPhaseService.updateInternshipPhase(id, request);
 
@@ -96,8 +104,9 @@ public class InternShipPhaseController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<Void>> deleteInternshipPhase(
-            @PathVariable("id") Integer id) {
+            @PathVariable("id") @Positive(message = "ID must be positive") Integer id) {
         internshipPhaseService.deleteInternshipPhase(id);
 
         ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()

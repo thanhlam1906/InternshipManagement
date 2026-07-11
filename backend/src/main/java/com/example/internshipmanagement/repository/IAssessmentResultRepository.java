@@ -26,6 +26,8 @@ public interface IAssessmentResultRepository extends JpaRepository<AssessmentRes
 
     long countByAssignmentId(Integer assignmentId);
 
+    long countByAssignmentIdAndRoundId(Integer assignmentId, Integer roundId);
+
     boolean existsByAssignmentId(Integer assignmentId);
 
     @EntityGraph(attributePaths = {"round", "criterion", "evaluatedBy"})

@@ -12,8 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,11 +54,29 @@ public class JSearchClient {
      * @param resultsPerPage number of results per page (handled by RapidAPI)
      * @return paginated job search results
      */
+    /**
+     * Maximum length for keyword/location query parameters to defend against
+     * excessively long inputs that could cause issues with the external API.
+     */
+    private static final int MAX_QUERY_PARAM_LENGTH = 200;
+
     public JobSearchResultResponse searchJobs(String keyword, String location, int page, int resultsPerPage) {
         String apiKey = properties.getJsearch().getApiKey();
 
         // Validate API key
         validateApiKey(apiKey, "JSearch API Key");
+
+        // Defense in depth: truncate keyword and location to a safe maximum length
+        if (keyword != null && keyword.length() > MAX_QUERY_PARAM_LENGTH) {
+            log.warn("Keyword exceeded max length ({}), truncating from {} to {} characters",
+                    MAX_QUERY_PARAM_LENGTH, keyword.length(), MAX_QUERY_PARAM_LENGTH);
+            keyword = keyword.substring(0, MAX_QUERY_PARAM_LENGTH);
+        }
+        if (location != null && location.length() > MAX_QUERY_PARAM_LENGTH) {
+            log.warn("Location exceeded max length ({}), truncating from {} to {} characters",
+                    MAX_QUERY_PARAM_LENGTH, location.length(), MAX_QUERY_PARAM_LENGTH);
+            location = location.substring(0, MAX_QUERY_PARAM_LENGTH);
+        }
 
         try {
             // Build the query string for JSearch specifically targeting internships
@@ -106,7 +125,22 @@ public class JSearchClient {
     private JobSearchResultResponse parseJSearchResponse(String responseBody, int page, int resultsPerPage) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            
+
+            // Validate response: check for API-level error before attempting to parse data
+            if (root.has("error") && !root.path("error").isNull()) {
+                String errorMsg = root.path("error").asText("Unknown API error");
+                log.error("JSearch API returned an error: {}", errorMsg);
+                throw new ExternalApiException("JSearch API error: " + errorMsg);
+            }
+
+            // Also check for a "status" field indicating error (some APIs use this pattern)
+            String status = root.path("status").asText("");
+            if ("error".equalsIgnoreCase(status) || "ERROR".equalsIgnoreCase(status)) {
+                String errorMsg = root.path("message").asText("Unknown API error");
+                log.error("JSearch API returned error status: {}", errorMsg);
+                throw new ExternalApiException("JSearch API error: " + errorMsg);
+            }
+
             JsonNode dataNode = root.path("data");
             List<ExternalJobResponse> jobs = new ArrayList<>();
 
@@ -115,7 +149,7 @@ public class JSearchClient {
                     // Extract Salary
                     Double minSalary = jobNode.path("job_min_salary").isNull() ? null : jobNode.path("job_min_salary").asDouble();
                     Double maxSalary = jobNode.path("job_max_salary").isNull() ? null : jobNode.path("job_max_salary").asDouble();
-                    
+
                     // Location
                     String jobCity = jobNode.path("job_city").asText("");
                     String jobCountry = jobNode.path("job_country").asText("");
@@ -137,23 +171,67 @@ public class JSearchClient {
                 }
             }
 
-            // JSearch doesn't return exact total count, we simulate it based on page and data
-            int totalResults = page * resultsPerPage + (jobs.size() == resultsPerPage ? 1 : 0);
-            int totalPages = jobs.isEmpty() ? page : page + 1; // Simplistic approach since JSearch doesn't provide total
+            // JSearch (api.openwebninja.com) does not provide accurate total result counts
+            // in its search response. Attempt to extract if available, otherwise use sentinel -1.
+            int totalResults = extractTotalResults(root, page, resultsPerPage, jobs.size());
+            int totalPages;
+            if (totalResults == -1) {
+                // Unknown total: show current page + 1 if this page has results
+                totalPages = jobs.isEmpty() ? page : page + 1;
+            } else {
+                totalPages = (int) Math.ceil((double) totalResults / resultsPerPage);
+            }
 
-            log.info("JSearch search returned {} results", jobs.size());
+            log.info("JSearch search returned {} results (page {})", jobs.size(), page);
 
             return JobSearchResultResponse.builder()
                     .jobs(jobs)
-                    .totalResults(totalResults) // mock
+                    .totalResults(totalResults)
                     .currentPage(page)
-                    .totalPages(totalPages) // mock
+                    .totalPages(totalPages)
                     .build();
 
+        } catch (ExternalApiException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to parse JSearch response: {}", e.getMessage(), e);
             throw new ExternalApiException("Loi khi xu ly du lieu tu JSearch: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Attempt to extract total result count from JSearch API response.
+     * JSearch (api.openwebninja.com) may not provide accurate totals.
+     * Returns the extracted count if available, or -1 as a sentinel meaning "unknown".
+     */
+    private int extractTotalResults(JsonNode root, int page, int resultsPerPage, int jobsOnThisPage) {
+        // Try known total-count fields used by JSearch variants
+        String[] totalFieldNames = {"total", "totalResults", "total_count", "totalCount"};
+        for (String fieldName : totalFieldNames) {
+            if (root.has(fieldName) && !root.path(fieldName).isNull()) {
+                int total = root.path(fieldName).asInt(-1);
+                if (total >= 0) {
+                    return total;
+                }
+            }
+        }
+
+        // Try metadata.total (nested object pattern)
+        JsonNode metadata = root.path("metadata");
+        if (!metadata.isMissingNode()) {
+            for (String fieldName : totalFieldNames) {
+                if (metadata.has(fieldName) && !metadata.path(fieldName).isNull()) {
+                    int total = metadata.path(fieldName).asInt(-1);
+                    if (total >= 0) {
+                        return total;
+                    }
+                }
+            }
+        }
+
+        // No total count available from the API — return sentinel -1.
+        // Callers should treat -1 as "unknown total" and not rely on it for pagination UI.
+        return -1;
     }
 
     private LocalDateTime parseDateTime(String dateStr) {
@@ -162,10 +240,9 @@ public class JSearchClient {
         }
         try {
             // JSearch returns UTC string e.g. "2023-11-24T12:00:00.000Z"
-            if (dateStr.endsWith("Z")) {
-                dateStr = dateStr.substring(0, dateStr.length() - 1);
-            }
-            return LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            // Use Instant which natively handles ISO-8601 with timezone offsets (including Z)
+            Instant instant = Instant.parse(dateStr);
+            return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         } catch (Exception e) {
             log.warn("Could not parse date: {}", dateStr);
             return null;

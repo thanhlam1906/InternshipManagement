@@ -8,6 +8,7 @@ import com.example.internshipmanagement.dto.response.round.AssessmentRoundRespon
 import com.example.internshipmanagement.dto.response.user.UserResponse;
 import com.example.internshipmanagement.service.AssessmentRoundService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,15 +16,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/assessment-rounds")
 @RequiredArgsConstructor
+@Validated
 public class AssessmentRoundController {
     private final AssessmentRoundService assessmentRoundService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<PaginatedResponse<AssessmentRoundResponse>>> getAssessmentRounds(
             @RequestParam(required = false) Integer phaseId,
             @RequestParam(defaultValue = "0") int page,
@@ -53,7 +58,8 @@ public class AssessmentRoundController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiDataResponse<AssessmentRoundResponse>> getAssessmentRoundById(@PathVariable Integer id) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiDataResponse<AssessmentRoundResponse>> getAssessmentRoundById(@PathVariable @Positive(message = "ID must be positive") Integer id) {
         AssessmentRoundResponse response = assessmentRoundService.getAssessmentRoundById(id);
         return ResponseEntity.ok(ApiDataResponse.<AssessmentRoundResponse>builder()
                 .success(true)
@@ -63,6 +69,7 @@ public class AssessmentRoundController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<AssessmentRoundResponse>> createAssessmentRound(
             @Valid @RequestBody AssessmentRoundCreateRequest request) {
         AssessmentRoundResponse response = assessmentRoundService.createAssessmentRound(request);
@@ -75,8 +82,9 @@ public class AssessmentRoundController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<AssessmentRoundResponse>> updateAssessmentRound(
-            @PathVariable Integer id,
+            @PathVariable @Positive(message = "ID must be positive") Integer id,
             @Valid @RequestBody AssessmentRoundUpdateRequest request) {
         AssessmentRoundResponse response = assessmentRoundService.updateAssessmentRound(id, request);
         return ResponseEntity.ok(ApiDataResponse.<AssessmentRoundResponse>builder()
@@ -87,7 +95,8 @@ public class AssessmentRoundController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiDataResponse<Void>> deleteAssessmentRound(@PathVariable Integer id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiDataResponse<Void>> deleteAssessmentRound(@PathVariable @Positive(message = "ID must be positive") Integer id) {
         assessmentRoundService.deleteAssessmentRound(id);
         return ResponseEntity.ok(ApiDataResponse.<Void>builder()
                 .success(true)

@@ -114,6 +114,7 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
     }
 
     @Override
+    @Transactional
     public AssessmentResultResponse createAssessmentResult(AssessmentResultCreateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -172,23 +173,24 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
                 saved.getId(), request.getAssignmentId(), request.getRoundId(),
                 request.getCriterionId(), request.getScore(), currentUserId);
 
-        long requiredCount = roundCriterionRepository.countRequiredCriteriaByPhaseId(assignment.getPhase().getId());
-        long submittedCount = assessmentResultRepository.countByAssignmentId(assignment.getId());
+        long requiredCount = roundCriterionRepository.countByRoundId(round.getId());
+        long submittedCount = assessmentResultRepository.countByAssignmentIdAndRoundId(assignment.getId(), round.getId());
 
         if (requiredCount > 0 && submittedCount == requiredCount) {
             assignment.setStatus(AssignmentStatus.COMPLETED);
             internshipAssignmentRepository.save(assignment);
-            log.info("Assignment completed automatically: id={}", assignment.getId());
-        } else if (assignment.getStatus() == AssignmentStatus.PENDING) {
+            log.info("Assignment completed automatically: id={}, roundId={}", assignment.getId(), round.getId());
+        } else if (submittedCount > 0 && submittedCount < requiredCount) {
             assignment.setStatus(AssignmentStatus.IN_PROGRESS);
             internshipAssignmentRepository.save(assignment);
-            log.info("Assignment marked IN_PROGRESS automatically: id={}", assignment.getId());
+            log.info("Assignment marked IN_PROGRESS automatically: id={}, roundId={}", assignment.getId(), round.getId());
         }
 
         return assessmentResultMapper.toResponse(saved);
     }
 
     @Override
+    @Transactional
     public AssessmentResultResponse updateAssessmentResult(Integer id, AssessmentResultUpdateRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -239,8 +241,9 @@ public class AssessmentResultServiceImpl implements AssessmentResultService {
         }
         log.info("Assessment result deleted: id={}, deletedBy={}", id, currentUserId);
 
-        long requiredCount = roundCriterionRepository.countRequiredCriteriaByPhaseId(assignment.getPhase().getId());
-        long submittedCount = assessmentResultRepository.countByAssignmentId(assignment.getId());
+        Integer roundId = result.getRound().getId();
+        long requiredCount = roundCriterionRepository.countByRoundId(roundId);
+        long submittedCount = assessmentResultRepository.countByAssignmentIdAndRoundId(assignment.getId(), roundId);
 
         if (submittedCount == 0) {
             assignment.setStatus(AssignmentStatus.PENDING);

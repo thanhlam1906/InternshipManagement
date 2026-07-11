@@ -1,5 +1,6 @@
 package com.example.internshipmanagement.dto.request.auth;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -22,4 +23,9 @@ public class ChangePasswordRequest {
 
     @NotBlank(message = "Xac nhan mat khau khong duoc de trong")
     private String confirmPassword;
+
+    @AssertTrue(message = "newPassword must match confirmPassword")
+    public boolean isPasswordMatching() {
+        return newPassword != null && newPassword.equals(confirmPassword);
+    }
 }

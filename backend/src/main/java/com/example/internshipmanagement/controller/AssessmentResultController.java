@@ -7,22 +7,27 @@ import com.example.internshipmanagement.dto.response.common.PaginatedResponse;
 import com.example.internshipmanagement.dto.response.result.AssessmentResultResponse;
 import com.example.internshipmanagement.service.AssessmentResultService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/assessment_results")
 @RequiredArgsConstructor
+@Validated
 public class AssessmentResultController {
 
     private final AssessmentResultService assessmentResultService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<PaginatedResponse<AssessmentResultResponse>>> getAssessmentResults(
             @RequestParam(required = false) Integer assignmentId,
             @RequestParam(required = false) Integer studentId,
@@ -52,8 +57,9 @@ public class AssessmentResultController {
     }
 
     @GetMapping("/{result_id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<AssessmentResultResponse>> getAssessmentResultById(
-            @PathVariable("result_id") Integer id) {
+            @PathVariable("result_id") @Positive(message = "ID must be positive") Integer id) {
         AssessmentResultResponse response = assessmentResultService.getAssessmentResultById(id);
         return ResponseEntity.ok(ApiDataResponse.<AssessmentResultResponse>builder()
                 .success(true)
@@ -63,6 +69,7 @@ public class AssessmentResultController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<AssessmentResultResponse>> createAssessmentResult(
             @Valid @RequestBody AssessmentResultCreateRequest request) {
         AssessmentResultResponse response = assessmentResultService.createAssessmentResult(request);
@@ -75,8 +82,9 @@ public class AssessmentResultController {
     }
 
     @PutMapping("/{result_id}")
+    @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<AssessmentResultResponse>> updateAssessmentResult(
-            @PathVariable("result_id") Integer id,
+            @PathVariable("result_id") @Positive(message = "ID must be positive") Integer id,
             @Valid @RequestBody AssessmentResultUpdateRequest request) {
         AssessmentResultResponse response = assessmentResultService.updateAssessmentResult(id, request);
         return ResponseEntity.ok(ApiDataResponse.<AssessmentResultResponse>builder()
@@ -87,8 +95,9 @@ public class AssessmentResultController {
     }
 
     @DeleteMapping("/{result_id}")
+    @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<Void>> deleteAssessmentResult(
-            @PathVariable("result_id") Integer id) {
+            @PathVariable("result_id") @Positive(message = "ID must be positive") Integer id) {
         assessmentResultService.deleteAssessmentResult(id);
         return ResponseEntity.ok(ApiDataResponse.<Void>builder()
                 .success(true)

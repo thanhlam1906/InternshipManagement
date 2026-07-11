@@ -1,10 +1,10 @@
 package com.example.internshipmanagement.dto.request.phase;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.w3c.dom.Text;
 
 import java.time.LocalDate;
 
@@ -22,10 +22,14 @@ public class InternshipPhaseCreateRequest {
     @NotNull(message = "Ngay bat dau khong duoc de trong")
     private LocalDate startDate;
 
-
     @NotNull(message = "Ngay ket thuc khong duoc de trong")
     private LocalDate endDate;
 
     private String description;
+
+    @AssertTrue(message = "startDate must be before endDate")
+    public boolean isDateRangeValid() {
+        return startDate != null && endDate != null && startDate.isBefore(endDate);
+    }
 }
 

@@ -96,6 +96,7 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
     }
 
     @Override
+    @Transactional
     public InternshipAssignmentResponse createAssignment(InternshipAssignmentCreateRequest request) {
         Student student = studentRepository.findById(request.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay sinh vien co id: " + request.getStudentId()));
@@ -124,6 +125,7 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
     }
 
     @Override
+    @Transactional
     public InternshipAssignmentResponse updateAssignment(Integer id, InternshipAssignmentUpdateRequest request) {
         InternshipAssignment assignment = internshipAssignmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay phan cong co id: " + id));
@@ -166,6 +168,7 @@ public class InternshipAssignmentServiceImpl implements InternshipAssignmentServ
     }
 
     @Override
+    @Transactional
     public InternshipAssignmentResponse updateAssignmentStatus(Integer id, InternshipAssignmentStatusUpdateRequest request) {
         InternshipAssignment assignment = internshipAssignmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay phan cong co id: " + id));

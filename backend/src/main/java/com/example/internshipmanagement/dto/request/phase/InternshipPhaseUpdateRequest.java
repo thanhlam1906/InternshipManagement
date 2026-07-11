@@ -1,5 +1,6 @@
 package com.example.internshipmanagement.dto.request.phase;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,5 +26,10 @@ public class InternshipPhaseUpdateRequest {
     private LocalDate endDate;
 
     private String description;
+
+    @AssertTrue(message = "startDate must be before endDate")
+    public boolean isDateRangeValid() {
+        return startDate != null && endDate != null && startDate.isBefore(endDate);
+    }
 }
 

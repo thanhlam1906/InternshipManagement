@@ -10,11 +10,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Validated
 public class AuthController {
 
     private final AuthService authService;
@@ -34,6 +37,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<UserResponse>> getCurrentUser() {
         UserResponse userResponse = authService.getCurrentUser();
 
@@ -48,6 +52,7 @@ public class AuthController {
     }
 
     @PutMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<Void>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(request);

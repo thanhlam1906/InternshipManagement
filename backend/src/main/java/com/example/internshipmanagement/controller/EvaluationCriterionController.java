@@ -3,31 +3,51 @@ package com.example.internshipmanagement.controller;
 import com.example.internshipmanagement.dto.request.criterion.EvaluationCriterionCreateRequest;
 import com.example.internshipmanagement.dto.request.criterion.EvaluationCriterionUpdateRequest;
 import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
+import com.example.internshipmanagement.dto.response.common.PaginatedResponse;
 import com.example.internshipmanagement.dto.response.evaluation_criterion.EvaluationCriterionResponse;
 import com.example.internshipmanagement.service.EvaluationCriterionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/evaluation-criteria")
 @RequiredArgsConstructor
+@Validated
 public class EvaluationCriterionController {
 
     private final EvaluationCriterionService service;
 
     @GetMapping
-    public ResponseEntity<ApiDataResponse<List<EvaluationCriterionResponse>>> getAllCriteria() {
-        List<EvaluationCriterionResponse> criteria = service.getAllCriteria();
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiDataResponse<PaginatedResponse<EvaluationCriterionResponse>>> getAllCriteria(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EvaluationCriterionResponse> criterionPage = service.getAllCriteria(pageable);
 
-        ApiDataResponse<List<EvaluationCriterionResponse>> apiResponse = ApiDataResponse.<List<EvaluationCriterionResponse>>builder()
+        PaginatedResponse<EvaluationCriterionResponse> data = PaginatedResponse.<EvaluationCriterionResponse>builder()
+                .items(criterionPage.getContent())
+                .pagination(PaginatedResponse.PaginationInfo.builder()
+                        .currentPage(criterionPage.getNumber())
+                        .pageSize(criterionPage.getSize())
+                        .totalPages(criterionPage.getTotalPages())
+                        .totalItems(criterionPage.getTotalElements())
+                        .build())
+                .build();
+
+        ApiDataResponse<PaginatedResponse<EvaluationCriterionResponse>> apiResponse = ApiDataResponse.<PaginatedResponse<EvaluationCriterionResponse>>builder()
                 .success(true)
                 .message("Lay danh sach tieu chi danh gia thanh cong")
-                .data(criteria)
+                .data(data)
                 .httpStatus(HttpStatus.OK)
                 .build();
 

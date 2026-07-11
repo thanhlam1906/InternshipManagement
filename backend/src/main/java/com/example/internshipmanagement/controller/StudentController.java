@@ -3,12 +3,19 @@ package com.example.internshipmanagement.controller;
 import com.example.internshipmanagement.dto.request.student.StudentCreateRequest;
 import com.example.internshipmanagement.dto.request.student.StudentUpdateRequest;
 import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
+import com.example.internshipmanagement.dto.response.common.PaginatedResponse;
 import com.example.internshipmanagement.dto.response.student.StudentResponse;
 import com.example.internshipmanagement.service.StudentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,18 +23,33 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/students")
 @RequiredArgsConstructor
+@Validated
 public class StudentController {
 
     private final StudentService studentService;
 
     @GetMapping
-    public ResponseEntity<ApiDataResponse<List<StudentResponse>>> getAllStudents() {
-        List<StudentResponse> students = studentService.getAllStudents();
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiDataResponse<PaginatedResponse<StudentResponse>>> getAllStudents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<StudentResponse> studentPage = studentService.getAllStudents(pageable);
 
-        ApiDataResponse<List<StudentResponse>> apiResponse = ApiDataResponse.<List<StudentResponse>>builder()
+        PaginatedResponse<StudentResponse> data = PaginatedResponse.<StudentResponse>builder()
+                .items(studentPage.getContent())
+                .pagination(PaginatedResponse.PaginationInfo.builder()
+                        .currentPage(studentPage.getNumber())
+                        .pageSize(studentPage.getSize())
+                        .totalPages(studentPage.getTotalPages())
+                        .totalItems(studentPage.getTotalElements())
+                        .build())
+                .build();
+
+        ApiDataResponse<PaginatedResponse<StudentResponse>> apiResponse = ApiDataResponse.<PaginatedResponse<StudentResponse>>builder()
                 .success(true)
                 .message("Lay danh sach sinh vien thanh cong")
-                .data(students)
+                .data(data)
                 .httpStatus(HttpStatus.OK)
                 .build();
 
@@ -35,7 +57,8 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiDataResponse<StudentResponse>> getStudentById(@PathVariable Integer id) {
+    @PreAuthorize("hasAnyRole('STUDENT', 'MENTOR', 'ADMIN')")
+    public ResponseEntity<ApiDataResponse<StudentResponse>> getStudentById(@PathVariable @Positive(message = "ID must be positive") Integer id) {
         StudentResponse student = studentService.getStudentById(id);
 
         ApiDataResponse<StudentResponse> apiResponse = ApiDataResponse.<StudentResponse>builder()
@@ -49,6 +72,7 @@ public class StudentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<StudentResponse>> createStudent(@Valid @RequestBody StudentCreateRequest request) {
         StudentResponse response = studentService.createStudent(request);
 
@@ -63,8 +87,9 @@ public class StudentController {
     }
 
     @PutMapping("/{student_id}")
+    @PreAuthorize("hasAnyRole('STUDENT', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<StudentResponse>> updateStudent(
-            @PathVariable("student_id") Integer studentId,
+            @PathVariable("student_id") @Positive(message = "ID must be positive") Integer studentId,
             @Valid @RequestBody StudentUpdateRequest request) {
         StudentResponse response = studentService.updateStudent(studentId, request);
 
@@ -79,8 +104,9 @@ public class StudentController {
     }
 
     @DeleteMapping("/{student_id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<Void>> deleteStudent(
-            @PathVariable("student_id") Integer studentId) {
+            @PathVariable("student_id") @Positive(message = "ID must be positive") Integer studentId) {
         studentService.deleteStudent(studentId);
 
         ApiDataResponse<Void> apiResponse = ApiDataResponse.<Void>builder()

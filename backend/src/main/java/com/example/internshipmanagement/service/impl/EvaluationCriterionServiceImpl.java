@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +34,12 @@ public class EvaluationCriterionServiceImpl implements EvaluationCriterionServic
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<EvaluationCriterionResponse> getAllCriteria(Pageable pageable) {
+        Page<EvaluationCriterion> criterionPage = repository.findAll(pageable);
+        return criterionPage.map(mapper::toResponse);
     }
 
     @Override

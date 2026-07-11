@@ -2,6 +2,7 @@ package com.example.internshipmanagement.dto.request.student;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -27,6 +28,7 @@ public class StudentCreateRequest {
     @Size(max = 50, message = "Lop hoc toi da 50 ky tu")
     private String clazz;
 
+    @Past(message = "Ngay sinh phai la ngay trong qua khu")
     private LocalDate dateOfBirth;
 
     @Size(max = 255, message = "Dia chi toi da 255 ky tu")

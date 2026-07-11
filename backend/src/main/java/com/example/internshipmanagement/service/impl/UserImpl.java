@@ -33,6 +33,7 @@ public class UserImpl implements UserService {
     private final UserMapper userMapper;
 
     @Override
+    @Transactional
     public UserResponse createUser(UserCreateRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ResourceConflictException("Ten dang nhap da ton tai");
@@ -53,6 +54,7 @@ public class UserImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<UserResponse> getUsers(Role role, Pageable pageable) {
         Page<User> userPage;
         if (role != null) {
@@ -64,12 +66,14 @@ public class UserImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponse getUserById(Integer id) {
         User user =  userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay nguoi dung voi id: "+ id));
         return userMapper.toUserResponse(user);
     }
 
     @Override
+    @Transactional
     public UserResponse updateUserInfo(Integer id, UserUpdateRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay nguoi dung voi id: " + id));
         
@@ -87,6 +91,7 @@ public class UserImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserResponse updateUserStatus(Integer id, UserStatusUpdateRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay nguoi dung voi id: " + id));
         
@@ -98,6 +103,7 @@ public class UserImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserResponse updateUserRole(Integer id, UserRoleUpdateRequest request) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay nguoi dung voi id: " + id));
         

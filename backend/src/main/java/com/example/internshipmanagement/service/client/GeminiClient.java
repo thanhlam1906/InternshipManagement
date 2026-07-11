@@ -99,11 +99,9 @@ public class GeminiClient {
 
         try {
             String responseBody = restClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(url)
-                            .queryParam("key", apiKey)
-                            .build())
+                    .uri(url)
                     .header("Content-Type", "application/json")
+                    .header("x-goog-api-key", apiKey)
                     .body(requestBody)
                     .retrieve()
                     .body(String.class);
@@ -111,8 +109,11 @@ public class GeminiClient {
             return parseGeminiResponse(responseBody);
 
         } catch (RestClientException e) {
-            log.error("Gemini API call failed: {}", e.getMessage(), e);
-            throw new ExternalApiException("Loi khi goi Gemini API. Vui long kiem tra API key: " + e.getMessage(), e);
+            String errorDetail = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            // Only log first 200 chars of error to avoid leaking sensitive data
+            String truncatedMsg = errorDetail.length() > 200 ? errorDetail.substring(0, 200) + "..." : errorDetail;
+            log.error("Gemini API call failed: {}", truncatedMsg, e);
+            throw new ExternalApiException("Loi khi goi Gemini API. Vui long kiem tra API key va thu lai.", e);
         }
     }
 

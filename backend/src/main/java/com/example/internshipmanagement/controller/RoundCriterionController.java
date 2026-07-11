@@ -6,22 +6,27 @@ import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
 import com.example.internshipmanagement.dto.response.round.RoundCriterionResponse;
 import com.example.internshipmanagement.service.RoundCriterionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/round_criteria")
 @RequiredArgsConstructor
+@Validated
 public class RoundCriterionController {
 
     private final RoundCriterionService roundCriterionService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<List<RoundCriterionResponse>>> getRoundCriteria(
-            @RequestParam Integer roundId) {
+            @RequestParam @Positive(message = "Round ID must be positive") Integer roundId) {
         List<RoundCriterionResponse> response = roundCriterionService.getCriteriaByRoundId(roundId);
         return ResponseEntity.ok(ApiDataResponse.<List<RoundCriterionResponse>>builder()
                 .success(true)
@@ -31,8 +36,9 @@ public class RoundCriterionController {
     }
 
     @GetMapping("/{round_criterion_id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<RoundCriterionResponse>> getRoundCriterionById(
-            @PathVariable("round_criterion_id") Integer id) {
+            @PathVariable("round_criterion_id") @Positive(message = "ID must be positive") Integer id) {
         RoundCriterionResponse response = roundCriterionService.getRoundCriterionById(id);
         return ResponseEntity.ok(ApiDataResponse.<RoundCriterionResponse>builder()
                 .success(true)
@@ -42,6 +48,7 @@ public class RoundCriterionController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<RoundCriterionResponse>> createRoundCriterion(
             @Valid @RequestBody RoundCriterionCreateRequest request) {
         RoundCriterionResponse response = roundCriterionService.createRoundCriterion(request);
@@ -54,8 +61,9 @@ public class RoundCriterionController {
     }
 
     @PutMapping("/{round_criterion_id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<RoundCriterionResponse>> updateRoundCriterion(
-            @PathVariable("round_criterion_id") Integer id,
+            @PathVariable("round_criterion_id") @Positive(message = "ID must be positive") Integer id,
             @Valid @RequestBody RoundCriterionUpdateRequest request) {
         RoundCriterionResponse response = roundCriterionService.updateRoundCriterion(id, request);
         return ResponseEntity.ok(ApiDataResponse.<RoundCriterionResponse>builder()
@@ -66,8 +74,9 @@ public class RoundCriterionController {
     }
 
     @DeleteMapping("/{round_criterion_id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<Void>> deleteRoundCriterion(
-            @PathVariable("round_criterion_id") Integer id) {
+            @PathVariable("round_criterion_id") @Positive(message = "ID must be positive") Integer id) {
         roundCriterionService.deleteRoundCriterion(id);
         return ResponseEntity.ok(ApiDataResponse.<Void>builder()
                 .success(true)

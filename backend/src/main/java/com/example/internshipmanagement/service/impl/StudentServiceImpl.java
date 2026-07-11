@@ -24,6 +24,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +39,7 @@ public class StudentServiceImpl implements StudentService {
     private final IInternshipAssignmentRepository internshipAssignmentRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<StudentResponse> getAllStudents() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -58,6 +61,27 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<StudentResponse> getAllStudents(Pageable pageable) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Role role = userDetails.getRole();
+        Integer userId = userDetails.getUserId();
+
+        Page<Student> studentPage;
+        if (role == Role.ADMIN) {
+            studentPage = studentRepository.findAll(pageable);
+        } else if (role == Role.MENTOR) {
+            studentPage = studentRepository.findStudentsByMentorId(userId, pageable);
+        } else {
+            throw new IllegalArgumentException("Khong co quyen truy cap");
+        }
+
+        return studentPage.map(studentMapper::toStudentResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public StudentResponse getStudentById(Integer id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

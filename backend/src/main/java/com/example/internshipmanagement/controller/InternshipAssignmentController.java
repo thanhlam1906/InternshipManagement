@@ -8,22 +8,27 @@ import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
 import com.example.internshipmanagement.dto.response.common.PaginatedResponse;
 import com.example.internshipmanagement.service.InternshipAssignmentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/internship_assignments")
 @RequiredArgsConstructor
+@Validated
 public class InternshipAssignmentController {
 
     private final InternshipAssignmentService internshipAssignmentService;
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<PaginatedResponse<InternshipAssignmentResponse>>> getAssignments(
             @RequestParam(required = false) Integer phaseId,
             @RequestParam(required = false) Integer studentId,
@@ -52,8 +57,9 @@ public class InternshipAssignmentController {
     }
 
     @GetMapping("/{assignment_id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiDataResponse<InternshipAssignmentResponse>> getAssignmentById(
-            @PathVariable("assignment_id") Integer id) {
+            @PathVariable("assignment_id") @Positive(message = "ID must be positive") Integer id) {
         InternshipAssignmentResponse response = internshipAssignmentService.getAssignmentById(id);
         return ResponseEntity.ok(ApiDataResponse.<InternshipAssignmentResponse>builder()
                 .success(true)
@@ -63,6 +69,7 @@ public class InternshipAssignmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<InternshipAssignmentResponse>> createAssignment(
             @Valid @RequestBody InternshipAssignmentCreateRequest request) {
         InternshipAssignmentResponse response = internshipAssignmentService.createAssignment(request);
@@ -75,8 +82,9 @@ public class InternshipAssignmentController {
     }
 
     @PutMapping("/{assignment_id}")
+    @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<InternshipAssignmentResponse>> updateAssignment(
-            @PathVariable("assignment_id") Integer id,
+            @PathVariable("assignment_id") @Positive(message = "ID must be positive") Integer id,
             @Valid @RequestBody InternshipAssignmentUpdateRequest request) {
         InternshipAssignmentResponse response = internshipAssignmentService.updateAssignment(id, request);
         return ResponseEntity.ok(ApiDataResponse.<InternshipAssignmentResponse>builder()
@@ -87,8 +95,9 @@ public class InternshipAssignmentController {
     }
 
     @PutMapping("/{assignment_id}/status")
+    @PreAuthorize("hasAnyRole('MENTOR', 'ADMIN')")
     public ResponseEntity<ApiDataResponse<InternshipAssignmentResponse>> updateAssignmentStatus(
-            @PathVariable("assignment_id") Integer id,
+            @PathVariable("assignment_id") @Positive(message = "ID must be positive") Integer id,
             @Valid @RequestBody InternshipAssignmentStatusUpdateRequest request) {
         InternshipAssignmentResponse response = internshipAssignmentService.updateAssignmentStatus(id, request);
         return ResponseEntity.ok(ApiDataResponse.<InternshipAssignmentResponse>builder()
@@ -99,8 +108,9 @@ public class InternshipAssignmentController {
     }
 
     @DeleteMapping("/{assignment_id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiDataResponse<Void>> deleteAssignment(
-            @PathVariable("assignment_id") Integer id) {
+            @PathVariable("assignment_id") @Positive(message = "ID must be positive") Integer id) {
         internshipAssignmentService.deleteAssignment(id);
         return ResponseEntity.ok(ApiDataResponse.<Void>builder()
                 .success(true)

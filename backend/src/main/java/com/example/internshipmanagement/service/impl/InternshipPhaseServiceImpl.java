@@ -39,6 +39,7 @@ public class InternshipPhaseServiceImpl implements InternshipPhaseService {
     }
 
     @Override
+    @Transactional
     public InternshipPhaseResponse createInternshipPhase(InternshipPhaseCreateRequest request) {
         if (internshipPhaseRepository.existsByPhaseName(request.getPhaseName())) {
             throw new ResourceConflictException("Ten dot thuc tap da ton tai");
@@ -50,6 +51,7 @@ public class InternshipPhaseServiceImpl implements InternshipPhaseService {
     }
 
     @Override
+    @Transactional
     public InternshipPhaseResponse updateInternshipPhase(Integer id, InternshipPhaseUpdateRequest request) {
         InternshipPhase internshipPhase = internshipPhaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay dot thuc tap voi id: " + id));

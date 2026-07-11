@@ -6,9 +6,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +24,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -72,6 +75,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/round_criteria", "/api/round_criteria/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/internship_assignments", "/api/internship_assignments/**").hasAnyRole("ADMIN", "MENTOR", "STUDENT")
                     .requestMatchers(HttpMethod.DELETE, "/api/internship_assignments/{id}").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/api/internship_assignments").hasAnyRole("ADMIN", "MENTOR")
+                    .requestMatchers(HttpMethod.PUT, "/api/internship_assignments/**").hasAnyRole("ADMIN", "MENTOR")
                     .requestMatchers("/api/internship_assignments", "/api/internship_assignments/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/assessment_results", "/api/assessment_results/**").hasAnyRole("ADMIN", "MENTOR", "STUDENT")
                     .requestMatchers(HttpMethod.DELETE, "/api/assessment_results/{id}").hasAnyRole("ADMIN", "MENTOR")
@@ -86,6 +91,10 @@ public class SecurityConfig {
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 .accessDeniedHandler(customAccessDeniedHandler)
             )
+            .headers(headers -> headers
+                .xssProtection(HeadersConfigurer.XXssConfig::disable) // deprecated; use CSP instead
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+            )
             .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -96,7 +105,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Gemini-Api-Key", "X-OpenAI-Api-Key"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

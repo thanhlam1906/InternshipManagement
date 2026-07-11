@@ -7,6 +7,7 @@ import com.example.internshipmanagement.service.JobSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class JobSearchController {
      * If keyword is not provided, the student's major is used automatically.
      */
     @GetMapping("/search")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiDataResponse<JobSearchResultResponse>> searchJobs(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
@@ -50,6 +52,7 @@ public class JobSearchController {
      * Search for internship jobs automatically based on the logged-in student's major.
      */
     @GetMapping("/search/by-major")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiDataResponse<JobSearchResultResponse>> searchJobsByMajor(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer pageSize) {

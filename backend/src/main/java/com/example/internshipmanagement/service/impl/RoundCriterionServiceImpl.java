@@ -48,6 +48,7 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
     }
 
     @Override
+    @Transactional
     public RoundCriterionResponse createRoundCriterion(RoundCriterionCreateRequest request) {
         AssessmentRound round = assessmentRoundRepository.findById(request.getRoundId())
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay dot danh gia co id: " + request.getRoundId()));
@@ -72,6 +73,7 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
     }
 
     @Override
+    @Transactional
     public RoundCriterionResponse updateRoundCriterion(Integer id, RoundCriterionUpdateRequest request) {
         RoundCriterion roundCriterion = roundCriterionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay tieu chi trong vong danh gia voi id: " + id));

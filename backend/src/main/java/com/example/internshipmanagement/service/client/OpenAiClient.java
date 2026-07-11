@@ -109,8 +109,10 @@ public class OpenAiClient {
             return parseOpenAiResponse(responseBody);
 
         } catch (RestClientException e) {
-            log.error("OpenAI API call failed: {}", e.getMessage(), e);
-            throw new ExternalApiException("Loi khi goi OpenAI API. Vui long kiem tra API key: " + e.getMessage(), e);
+            String errorDetail = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            String truncatedMsg = errorDetail.length() > 200 ? errorDetail.substring(0, 200) + "..." : errorDetail;
+            log.error("OpenAI API call failed: {}", truncatedMsg, e);
+            throw new ExternalApiException("Loi khi goi OpenAI API. Vui long kiem tra API key va thu lai.", e);
         }
     }
 

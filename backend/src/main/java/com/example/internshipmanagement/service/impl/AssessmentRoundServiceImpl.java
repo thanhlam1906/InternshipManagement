@@ -83,6 +83,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
     }
 
     @Override
+    @Transactional
     public AssessmentRoundResponse createAssessmentRound(AssessmentRoundCreateRequest request) {
         InternshipPhase phase = internshipPhaseRepository.findById(request.getPhaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay dot thuc tap co id: " + request.getPhaseId()));
@@ -114,6 +115,7 @@ public class AssessmentRoundServiceImpl implements AssessmentRoundService {
     }
 
     @Override
+    @Transactional
     public AssessmentRoundResponse updateAssessmentRound(Integer id, AssessmentRoundUpdateRequest request) {
         AssessmentRound assessmentRound = assessmentRoundRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("khong tim thay dot danh gia id: " + id));

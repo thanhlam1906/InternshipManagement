@@ -16,6 +16,8 @@ public interface RoundCriterionRepository extends JpaRepository<RoundCriterion, 
 
     boolean existsByRoundIdAndCriterionId(Integer roundId, Integer criterionId);
 
+    long countByRoundId(Integer roundId);
+
     @Query("SELECT COUNT(rc) FROM RoundCriterion rc " +
            "WHERE rc.round.phase.id = :phaseId AND rc.round.isActive = true")
     long countRequiredCriteriaByPhaseId(@Param("phaseId") Integer phaseId);

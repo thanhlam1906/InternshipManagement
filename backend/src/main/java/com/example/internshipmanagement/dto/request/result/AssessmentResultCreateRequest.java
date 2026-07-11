@@ -1,5 +1,6 @@
 package com.example.internshipmanagement.dto.request.result;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -22,6 +23,7 @@ public class AssessmentResultCreateRequest {
 
     @NotNull(message = "Diem so khong duoc de trong")
     @DecimalMin(value = "0.0", message = "Diem so phai lon hon hoac bang 0")
+    @DecimalMax(value = "999.99", message = "Diem so toi da la 999.99")
     private BigDecimal score;
 
     private String comments;
