@@ -14,9 +14,20 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    const trimmedUsername = username.trim()
+    if (trimmedUsername.length === 0) {
+      toast.error('Vui lòng nhập tên đăng nhập')
+      return
+    }
+    if (password.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+
     setLoading(true)
     try {
-      await login(username, password)
+      await login({ username: trimmedUsername, password })
       toast.success('Đăng nhập thành công!')
       navigate('/')
     } catch (err) {
@@ -59,6 +70,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Nhập username..."
                 required
+                autoComplete="username"
                 className="w-full px-4 py-2.5 rounded-lg border border-input bg-white text-sm
                   focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
                   transition-all"
@@ -76,6 +88,8 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Nhập mật khẩu..."
                   required
+                  minLength={6}
+                  autoComplete="current-password"
                   className="w-full px-4 py-2.5 rounded-lg border border-input bg-white text-sm
                     focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
                     transition-all pr-10"
@@ -83,6 +97,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground
                     hover:text-foreground transition-colors"
                 >

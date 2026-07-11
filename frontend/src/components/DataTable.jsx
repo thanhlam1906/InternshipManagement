@@ -17,6 +17,7 @@ export default function DataTable({
               {columns.map((col) => (
                 <th
                   key={col.key}
+                  scope="col"
                   className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                   style={{ width: col.width }}
                 >
@@ -35,7 +36,7 @@ export default function DataTable({
             ) : (
               data.map((row, idx) => (
                 <tr
-                  key={row.id || row.userId || idx}
+                  key={row.id || row.userId || `${idx}-${JSON.stringify(row)}`}
                   onClick={() => onRowClick?.(row)}
                   className={`hover:bg-secondary/30 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
@@ -61,16 +62,24 @@ export default function DataTable({
           </p>
           <div className="flex gap-2">
             <button
-              onClick={() => onPageChange(pagination.currentPage - 1)}
+              onClick={() => {
+                const page = pagination.currentPage - 1
+                if (page >= 0) onPageChange(page)
+              }}
               disabled={pagination.currentPage === 0}
+              aria-label="Trang trước"
               className="p-2 rounded-lg border border-border hover:bg-white disabled:opacity-30
                 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
-              onClick={() => onPageChange(pagination.currentPage + 1)}
+              onClick={() => {
+                const page = pagination.currentPage + 1
+                if (page < pagination.totalPages) onPageChange(page)
+              }}
               disabled={pagination.currentPage >= pagination.totalPages - 1}
+              aria-label="Trang sau"
               className="p-2 rounded-lg border border-border hover:bg-white disabled:opacity-30
                 disabled:cursor-not-allowed transition-colors"
             >

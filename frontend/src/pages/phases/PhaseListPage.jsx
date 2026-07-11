@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { phaseApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -21,6 +21,8 @@ export default function PhaseListPage() {
   const [editingPhase, setEditingPhase] = useState(null)
   const [deletingPhase, setDeletingPhase] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -33,18 +35,22 @@ export default function PhaseListPage() {
   const fetchPhases = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await phaseApi.getAll({ page, size: 10 })
+      const res = await phaseApi.getAll({ page, size: 10 }, { signal: abortRef.current?.signal })
       setPhases(res.data.data.items || [])
       setPagination(res.data.data.pagination)
     } catch (err) {
-      toast.error('Không thể tải danh sách đợt thực tập')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách đợt thực tập')
+      }
     } finally {
       setLoading(false)
     }
   }, [page])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchPhases()
+    return () => { abortRef.current?.abort() }
   }, [fetchPhases])
 
   const openCreate = () => {
@@ -71,6 +77,10 @@ export default function PhaseListPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (form.startDate && form.endDate && form.endDate <= form.startDate) {
+      toast.error('Ngày kết thúc phải sau ngày bắt đầu')
+      return
+    }
     setFormLoading(true)
     try {
       if (editingPhase) {
@@ -90,6 +100,7 @@ export default function PhaseListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await phaseApi.delete(deletingPhase.id)
       toast.success('Xóa đợt thực tập thành công!')
@@ -97,6 +108,8 @@ export default function PhaseListPage() {
       fetchPhases()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -117,7 +130,8 @@ export default function PhaseListPage() {
               <Edit className="w-4 h-4 text-muted-foreground" />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setDeletingPhase(row); setDeleteOpen(true) }}
-              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
+              disabled={loading}
+              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
               <Trash2 className="w-4 h-4 text-destructive" />
             </button>
           </div>
@@ -166,6 +180,7 @@ export default function PhaseListPage() {
             type="text"
             value={form.phaseName}
             onChange={e => setForm({ ...form, phaseName: e.target.value })}
+            maxLength={200}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             required
           />
@@ -188,6 +203,7 @@ export default function PhaseListPage() {
             type="date"
             value={form.endDate}
             onChange={e => setForm({ ...form, endDate: e.target.value })}
+            min={form.startDate || undefined}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             required
           />
@@ -198,6 +214,7 @@ export default function PhaseListPage() {
           <textarea
             value={form.description}
             onChange={e => setForm({ ...form, description: e.target.value })}
+            maxLength={1000}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px]"
           />
         </div>
@@ -208,6 +225,7 @@ export default function PhaseListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa đợt thực tập "${deletingPhase?.phaseName}"?`}
       />
     </div>

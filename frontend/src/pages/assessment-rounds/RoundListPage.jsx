@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { roundApi, phaseApi, criterionApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -31,6 +31,9 @@ export default function RoundListPage() {
   const [deletingRound, setDeletingRound] = useState(null)
   const [selectedRound, setSelectedRound] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [toggleLoadingId, setToggleLoadingId] = useState(null)
+  const abortRef = useRef(null)
 
   // Form states
   const [form, setForm] = useState({
@@ -61,11 +64,13 @@ export default function RoundListPage() {
     try {
       const params = { page, size: 10 }
       if (phaseFilter) params.phaseId = phaseFilter
-      const res = await roundApi.getAll(params)
+      const res = await roundApi.getAll(params, { signal: abortRef.current?.signal })
       setRounds(res.data.data.items || [])
       setPagination(res.data.data.pagination)
     } catch (err) {
-      toast.error('Không thể tải danh sách đợt đánh giá')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách đợt đánh giá')
+      }
     } finally {
       setLoading(false)
     }
@@ -76,7 +81,9 @@ export default function RoundListPage() {
   }, [fetchFilters])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchRounds()
+    return () => { abortRef.current?.abort() }
   }, [fetchRounds])
 
   const openCreate = () => {
@@ -131,6 +138,10 @@ export default function RoundListPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      toast.error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu')
+      return
+    }
     setFormLoading(true)
     try {
       if (editingRound) {
@@ -173,6 +184,7 @@ export default function RoundListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await roundApi.delete(deletingRound.id)
       toast.success('Xóa đợt đánh giá thành công!')
@@ -180,16 +192,21 @@ export default function RoundListPage() {
       fetchRounds()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
   const handleToggleStatus = async (round) => {
+    setToggleLoadingId(round.id)
     try {
       await roundApi.update(round.id, { isActive: !round.isActive })
       toast.success('Cập nhật trạng thái thành công!')
       fetchRounds()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setToggleLoadingId(null)
     }
   }
 
@@ -202,9 +219,9 @@ export default function RoundListPage() {
       key: 'isActive', title: 'Trạng thái',
       render: (val, row) => (
         <button
-          disabled={!isAdmin}
+          disabled={!isAdmin || toggleLoadingId === row.id}
           onClick={(e) => { e.stopPropagation(); handleToggleStatus(row) }}
-          className="flex items-center gap-1.5 text-xs font-medium"
+          className="flex items-center gap-1.5 text-xs font-medium disabled:opacity-50"
         >
           {val ? (
             <><ToggleRight className="w-5 h-5 text-success" /> <span className="text-success">Hoạt động</span></>
@@ -229,7 +246,8 @@ export default function RoundListPage() {
                 <Edit className="w-4 h-4 text-muted-foreground" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); setDeletingRound(row); setDeleteOpen(true) }}
-                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Xóa">
+                disabled={loading}
+                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50" title="Xóa">
                 <Trash2 className="w-4 h-4 text-destructive" />
               </button>
             </>
@@ -347,7 +365,7 @@ export default function RoundListPage() {
               </button>
             </div>
             {form.criteriaList.map((item, idx) => (
-              <div key={idx} className="flex gap-2 items-center">
+              <div key={item.criterionId ? `${item.criterionId}-${idx}` : `new-${idx}`} className="flex gap-2 items-center">
                 <select
                   value={item.criterionId}
                   onChange={e => handleCriterionChange(idx, 'criterionId', e.target.value)}
@@ -360,6 +378,7 @@ export default function RoundListPage() {
                 <input
                   type="number"
                   step="0.01"
+                  min="0.01"
                   placeholder="Trọng số"
                   value={item.weight}
                   onChange={e => handleCriterionChange(idx, 'weight', e.target.value)}
@@ -416,6 +435,7 @@ export default function RoundListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa đợt đánh giá "${deletingRound?.roundName}"?`}
       />
     </div>

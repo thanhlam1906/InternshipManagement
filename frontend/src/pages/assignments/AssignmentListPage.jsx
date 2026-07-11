@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { assignmentApi, studentApi, mentorApi, phaseApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -39,6 +39,8 @@ export default function AssignmentListPage() {
 
   const [formLoading, setFormLoading] = useState(false)
   const [statusLoading, setStatusLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
 
   // Form states
   const [form, setForm] = useState({
@@ -67,12 +69,12 @@ export default function AssignmentListPage() {
     setLoading(true)
     try {
       const params = { page, size: 10 }
-      
+
       // Role based automatic filters
       if (isStudent) {
-        params.studentId = currentUser.userId
+        params.studentId = currentUser?.userId
       } else if (isMentor) {
-        params.mentorId = currentUser.userId
+        params.mentorId = currentUser?.userId
       } else {
         // Admin manually selected filters
         if (selectedPhase) params.phaseId = selectedPhase
@@ -80,22 +82,26 @@ export default function AssignmentListPage() {
         if (selectedMentor) params.mentorId = selectedMentor
       }
 
-      const res = await assignmentApi.getAll(params)
+      const res = await assignmentApi.getAll(params, { signal: abortRef.current?.signal })
       setAssignments(res.data.data.items || [])
       setPagination(res.data.data.pagination)
     } catch (err) {
-      toast.error('Không thể tải danh sách phân công')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách phân công')
+      }
     } finally {
       setLoading(false)
     }
-  }, [page, isStudent, isMentor, currentUser.userId, selectedPhase, selectedStudent, selectedMentor])
+  }, [page, isStudent, isMentor, currentUser?.userId, selectedPhase, selectedStudent, selectedMentor])
 
   useEffect(() => {
     fetchFilters()
   }, [fetchFilters])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchAssignments()
+    return () => { abortRef.current?.abort() }
   }, [fetchAssignments])
 
   const openCreate = () => {
@@ -124,10 +130,18 @@ export default function AssignmentListPage() {
     e.preventDefault()
     setFormLoading(true)
     try {
+      const studentId = parseInt(form.studentId)
+      const mentorId = parseInt(form.mentorId)
+      const phaseId = parseInt(form.phaseId)
+      if (isNaN(studentId) || isNaN(mentorId) || isNaN(phaseId)) {
+        toast.error('Vui lòng chọn đầy đủ thông tin')
+        setFormLoading(false)
+        return
+      }
       const payload = {
-        studentId: parseInt(form.studentId),
-        mentorId: parseInt(form.mentorId),
-        phaseId: parseInt(form.phaseId)
+        studentId,
+        mentorId,
+        phaseId
       }
       if (editingAssignment) {
         await assignmentApi.update(editingAssignment.id, payload)
@@ -161,6 +175,7 @@ export default function AssignmentListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await assignmentApi.delete(deletingAssignment.id)
       toast.success('Xóa phân công thành công!')
@@ -168,6 +183,8 @@ export default function AssignmentListPage() {
       fetchAssignments()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -194,22 +211,26 @@ export default function AssignmentListPage() {
           {isAdmin && (
             <>
               <button onClick={(e) => { e.stopPropagation(); openEdit(row) }}
-                className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Sửa thông tin">
+                disabled={loading}
+                className="p-1.5 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50" title="Sửa thông tin">
                 <Edit className="w-4 h-4 text-muted-foreground" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); openStatus(row) }}
-                className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Đổi trạng thái">
+                disabled={loading}
+                className="p-1.5 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50" title="Đổi trạng thái">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); setDeletingAssignment(row); setDeleteOpen(true) }}
-                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Xóa phân công">
+                disabled={loading}
+                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50" title="Xóa phân công">
                 <Trash2 className="w-4 h-4 text-destructive" />
               </button>
             </>
           )}
           {isMentor && (
             <button onClick={(e) => { e.stopPropagation(); openStatus(row) }}
-              className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Đổi trạng thái">
+              disabled={loading}
+              className="p-1.5 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50" title="Đổi trạng thái">
               <CheckCircle2 className="w-4 h-4 text-primary" />
             </button>
           )}
@@ -336,6 +357,7 @@ export default function AssignmentListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa phân công cho sinh viên "${deletingAssignment?.studentName}"?`}
       />
     </div>

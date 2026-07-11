@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { roundCriterionApi, roundApi, criterionApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -15,7 +15,7 @@ export default function RoundCriterionListPage() {
   const [roundCriteria, setRoundCriteria] = useState([])
   const [rounds, setRounds] = useState([])
   const [criteria, setCriteria] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   // Selected Round Filter
   const [selectedRoundId, setSelectedRoundId] = useState('')
@@ -26,6 +26,8 @@ export default function RoundCriterionListPage() {
   const [editingMapping, setEditingMapping] = useState(null)
   const [deletingMapping, setDeletingMapping] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
 
   // Form State
   const [form, setForm] = useState({
@@ -55,14 +57,17 @@ export default function RoundCriterionListPage() {
   const fetchRoundCriteria = useCallback(async () => {
     if (!selectedRoundId) {
       setRoundCriteria([])
+      setLoading(false)
       return
     }
     setLoading(true)
     try {
-      const res = await roundCriterionApi.getAll({ roundId: parseInt(selectedRoundId) })
+      const res = await roundCriterionApi.getAll({ roundId: parseInt(selectedRoundId) }, { signal: abortRef.current?.signal })
       setRoundCriteria(res.data.data || [])
     } catch (err) {
-      toast.error('Không thể tải danh sách tiêu chí của đợt')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách tiêu chí của đợt')
+      }
     } finally {
       setLoading(false)
     }
@@ -73,7 +78,9 @@ export default function RoundCriterionListPage() {
   }, [fetchRoundsAndCriteria])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchRoundCriteria()
+    return () => { abortRef.current?.abort() }
   }, [fetchRoundCriteria])
 
   const openCreate = () => {
@@ -95,16 +102,28 @@ export default function RoundCriterionListPage() {
     e.preventDefault()
     setFormLoading(true)
     try {
+      const weight = parseFloat(form.weight)
+      if (isNaN(weight) || weight <= 0) {
+        toast.error('Trọng số không hợp lệ')
+        setFormLoading(false)
+        return
+      }
       if (editingMapping) {
         await roundCriterionApi.update(editingMapping.id, {
-          weight: parseFloat(form.weight)
+          weight
         })
         toast.success('Cập nhật trọng số thành công!')
       } else {
+        const criterionId = parseInt(form.criterionId)
+        if (isNaN(criterionId)) {
+          toast.error('Vui lòng chọn tiêu chí')
+          setFormLoading(false)
+          return
+        }
         await roundCriterionApi.create({
           roundId: parseInt(selectedRoundId),
-          criterionId: parseInt(form.criterionId),
-          weight: parseFloat(form.weight)
+          criterionId,
+          weight
         })
         toast.success('Gán tiêu chí vào đợt đánh giá thành công!')
       }
@@ -118,6 +137,7 @@ export default function RoundCriterionListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await roundCriterionApi.delete(deletingMapping.id)
       toast.success('Xóa tiêu chí khỏi đợt thành công!')
@@ -125,6 +145,8 @@ export default function RoundCriterionListPage() {
       fetchRoundCriteria()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -143,7 +165,8 @@ export default function RoundCriterionListPage() {
               <Edit className="w-4 h-4 text-muted-foreground" />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setDeletingMapping(row); setDeleteOpen(true) }}
-              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Xóa khỏi đợt">
+              disabled={loading}
+              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50" title="Xóa khỏi đợt">
               <Trash2 className="w-4 h-4 text-destructive" />
             </button>
           </div>
@@ -214,6 +237,7 @@ export default function RoundCriterionListPage() {
           <input
             type="number"
             step="0.01"
+            min="0.01"
             value={form.weight}
             onChange={e => setForm({ ...form, weight: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -227,6 +251,7 @@ export default function RoundCriterionListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn gỡ tiêu chí này khỏi đợt đánh giá?`}
       />
     </div>

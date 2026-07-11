@@ -34,46 +34,33 @@ function App() {
               </ProtectedRoute>
             }
           >
-            {/* Dashboard available to all logged in users */}
-            <Route index element={<DashboardPage />} />
+            {/* Pages accessible to all authenticated users */}
+            <Route element={<ProtectedRoute roles={['ADMIN', 'MENTOR', 'STUDENT']} />}>
+              <Route index element={<DashboardPage />} />
+            </Route>
+
+            {/* Admin + Mentor routes */}
+            <Route element={<ProtectedRoute roles={['ADMIN', 'MENTOR']} />}>
+              <Route path="students" element={<StudentListPage />} />
+              <Route path="assignments" element={<AssignmentListPage />} />
+              <Route path="assessment-rounds" element={<RoundListPage />} />
+              <Route path="assessment-results" element={<ResultListPage />} />
+            </Route>
 
             {/* Admin only routes */}
-            <Route
-              path="users"
-              element={
-                <ProtectedRoute roles={['ADMIN']}>
-                  <UserListPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+              <Route path="users" element={<UserListPage />} />
+              <Route path="mentors" element={<MentorListPage />} />
+              <Route path="phases" element={<PhaseListPage />} />
+              <Route path="round-criteria" element={<RoundCriterionListPage />} />
+              <Route path="evaluation-criteria" element={<CriterionListPage />} />
+            </Route>
 
-            {/* Shared routes with role-based component internal restrictions */}
-            <Route path="students" element={<StudentListPage />} />
-            <Route path="mentors" element={<MentorListPage />} />
-            <Route path="phases" element={<PhaseListPage />} />
-            <Route path="assignments" element={<AssignmentListPage />} />
-            <Route path="assessment-rounds" element={<RoundListPage />} />
-            <Route path="round-criteria" element={<RoundCriterionListPage />} />
-            <Route path="evaluation-criteria" element={<CriterionListPage />} />
-            <Route path="assessment-results" element={<ResultListPage />} />
-
-            {/* Student only features */}
-            <Route
-              path="cv-review"
-              element={
-                <ProtectedRoute roles={['STUDENT']}>
-                  <CVReviewPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="job-search"
-              element={
-                <ProtectedRoute roles={['STUDENT']}>
-                  <JobSearchPage />
-                </ProtectedRoute>
-              }
-            />
+            {/* Student only routes */}
+            <Route element={<ProtectedRoute roles={['STUDENT']} />}>
+              <Route path="cv-review" element={<CVReviewPage />} />
+              <Route path="job-search" element={<JobSearchPage />} />
+            </Route>
           </Route>
 
           {/* Fallback */}

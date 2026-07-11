@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { criterionApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -19,6 +19,8 @@ export default function CriterionListPage() {
   const [editingCriterion, setEditingCriterion] = useState(null)
   const [deletingCriterion, setDeletingCriterion] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -30,17 +32,21 @@ export default function CriterionListPage() {
   const fetchCriteria = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await criterionApi.getAll()
+      const res = await criterionApi.getAll({ signal: abortRef.current?.signal })
       setCriteria(res.data.data || [])
     } catch (err) {
-      toast.error('Không thể tải danh sách tiêu chí đánh giá')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách tiêu chí đánh giá')
+      }
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchCriteria()
+    return () => { abortRef.current?.abort() }
   }, [fetchCriteria])
 
   const openCreate = () => {
@@ -67,9 +73,15 @@ export default function CriterionListPage() {
     e.preventDefault()
     setFormLoading(true)
     try {
+      const maxScore = parseFloat(form.maxScore)
+      if (isNaN(maxScore)) {
+        toast.error('Điểm tối đa không hợp lệ')
+        setFormLoading(false)
+        return
+      }
       const payload = {
         ...form,
-        maxScore: parseFloat(form.maxScore)
+        maxScore
       }
       if (editingCriterion) {
         await criterionApi.update(editingCriterion.id, payload)
@@ -88,6 +100,7 @@ export default function CriterionListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await criterionApi.delete(deletingCriterion.id)
       toast.success('Xóa tiêu chí thành công!')
@@ -95,6 +108,8 @@ export default function CriterionListPage() {
       fetchCriteria()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -114,7 +129,8 @@ export default function CriterionListPage() {
               <Edit className="w-4 h-4 text-muted-foreground" />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setDeletingCriterion(row); setDeleteOpen(true) }}
-              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
+              disabled={loading}
+              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
               <Trash2 className="w-4 h-4 text-destructive" />
             </button>
           </div>
@@ -170,7 +186,8 @@ export default function CriterionListPage() {
           <label className="block text-sm font-medium mb-1">Điểm tối đa</label>
           <input
             type="number"
-            step="0.1"
+            step="0.01"
+            min="0.01"
             value={form.maxScore}
             onChange={e => setForm({ ...form, maxScore: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -193,6 +210,7 @@ export default function CriterionListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa tiêu chí "${deletingCriterion?.criterionName}"?`}
       />
     </div>

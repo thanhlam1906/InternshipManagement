@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { jobSearchApi } from '@/services/api'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { Search, MapPin, Briefcase, DollarSign, Calendar, ExternalLink } from 'lucide-react'
@@ -7,8 +7,9 @@ import toast from 'react-hot-toast'
 export default function JobSearchPage() {
   const [jobs, setJobs] = useState([])
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 })
-  const [loading, setLoading] = useState(false)
-  
+  const [loading, setLoading] = useState(true)
+  const abortRef = useRef(null)
+
   // Search parameters
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState('')
@@ -20,13 +21,13 @@ export default function JobSearchPage() {
     try {
       let res
       const params = { page, pageSize: 10 }
-      
+
       if (byMajor) {
-        res = await jobSearchApi.searchByMajor(params)
+        res = await jobSearchApi.searchByMajor(params, { signal: abortRef.current?.signal })
       } else {
         if (keyword) params.keyword = keyword
         if (location) params.location = location
-        res = await jobSearchApi.search(params)
+        res = await jobSearchApi.search(params, { signal: abortRef.current?.signal })
       }
 
       setJobs(res.data.data.jobs || [])
@@ -35,29 +36,34 @@ export default function JobSearchPage() {
         totalPages: res.data.data.totalPages || 1
       })
     } catch (err) {
-      toast.error('Không thể tìm kiếm công việc. Vui lòng kiểm tra lại cấu hình JSearch API key.')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tìm kiếm công việc. Vui lòng kiểm tra lại cấu hình JSearch API key.')
+      }
     } finally {
       setLoading(false)
     }
   }, [page, byMajor, keyword, location])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchJobs()
+    return () => { abortRef.current?.abort() }
   }, [fetchJobs])
 
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     e.preventDefault()
     setByMajor(false)
     setPage(1)
-    fetchJobs()
-  }
+    // useEffect will pick up the new byMajor/page values and call fetchJobs
+  }, [])
 
-  const handleResetByMajor = () => {
+  const handleResetByMajor = useCallback(() => {
     setByMajor(true)
     setKeyword('')
     setLocation('')
     setPage(1)
-  }
+    // useEffect will pick up the changed state values and call fetchJobs
+  }, [])
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -130,7 +136,7 @@ export default function JobSearchPage() {
             <>
               <div className="grid grid-cols-1 gap-4">
                 {jobs.map((job, idx) => (
-                  <div key={job.externalId || idx} className="bg-white rounded-xl border border-border p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-4">
+                  <div key={job.externalId || `job-${idx}`} className="bg-white rounded-xl border border-border p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-4">
                     <div className="space-y-2.5">
                       <div>
                         <span className="px-2 py-0.5 rounded bg-secondary text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
@@ -145,10 +151,10 @@ export default function JobSearchPage() {
                           <MapPin className="w-3.5 h-3.5" />
                           {job.location || 'Remote'}
                         </span>
-                        {(job.salaryMin || job.salaryMax) && (
+                        {(job.salaryMin != null || job.salaryMax != null) && (
                           <span className="flex items-center gap-0.5">
                             <DollarSign className="w-3.5 h-3.5" />
-                            {job.salaryMin ? `$${job.salaryMin.toLocaleString()}` : '0'} - {job.salaryMax ? `$${job.salaryMax.toLocaleString()}` : 'Negotiable'}
+                            {job.salaryMin != null ? `$${job.salaryMin.toLocaleString()}` : '0'} - {job.salaryMax != null ? `$${job.salaryMax.toLocaleString()}` : 'Negotiable'}
                           </span>
                         )}
                         {job.postedAt && (
@@ -167,7 +173,7 @@ export default function JobSearchPage() {
                     </div>
 
                     <div className="flex items-end justify-start md:justify-end shrink-0">
-                      {job.applyUrl ? (
+                      {job.applyUrl && (job.applyUrl.startsWith('http://') || job.applyUrl.startsWith('https://')) ? (
                         <a
                           href={job.applyUrl}
                           target="_blank"

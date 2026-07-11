@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { mentorApi, userApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -19,6 +19,8 @@ export default function MentorListPage() {
   const [editingMentor, setEditingMentor] = useState(null)
   const [deletingMentor, setDeletingMentor] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
 
   // Available users to link
   const [mentorUsers, setMentorUsers] = useState([])
@@ -33,10 +35,12 @@ export default function MentorListPage() {
   const fetchMentors = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await mentorApi.getAll()
+      const res = await mentorApi.getAll({ signal: abortRef.current?.signal })
       setMentors(res.data.data || [])
     } catch (err) {
-      toast.error('Không thể tải danh sách giảng viên')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách giảng viên')
+      }
     } finally {
       setLoading(false)
     }
@@ -44,7 +48,7 @@ export default function MentorListPage() {
 
   const fetchMentorUsers = async () => {
     try {
-      const res = await userApi.getAll({ role: 'MENTOR', size: 100 })
+      const res = await userApi.getAll({ role: 'MENTOR', size: 100 }, { signal: abortRef.current?.signal })
       const usersList = res.data.data.items || []
       const filtered = usersList.filter(u => !mentors.some(m => m.username === u.username))
       setMentorUsers(filtered)
@@ -54,7 +58,9 @@ export default function MentorListPage() {
   }
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchMentors()
+    return () => { abortRef.current?.abort() }
   }, [fetchMentors])
 
   const openCreate = () => {
@@ -71,7 +77,7 @@ export default function MentorListPage() {
   const openEdit = (mentor) => {
     setEditingMentor(mentor)
     setForm({
-      userId: mentor.id,
+      userId: '',
       department: mentor.department || '',
       academicRank: mentor.academicRank || ''
     })
@@ -94,8 +100,14 @@ export default function MentorListPage() {
           setFormLoading(false)
           return
         }
+        const parsedUserId = parseInt(form.userId)
+        if (isNaN(parsedUserId)) {
+          toast.error('ID tài khoản không hợp lệ')
+          setFormLoading(false)
+          return
+        }
         await mentorApi.create({
-          userId: parseInt(form.userId),
+          userId: parsedUserId,
           department: form.department,
           academicRank: form.academicRank
         })
@@ -111,6 +123,7 @@ export default function MentorListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await mentorApi.delete(deletingMentor.id)
       toast.success('Xóa thông tin giảng viên thành công!')
@@ -118,6 +131,8 @@ export default function MentorListPage() {
       fetchMentors()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -138,7 +153,8 @@ export default function MentorListPage() {
               <Edit className="w-4 h-4 text-muted-foreground" />
             </button>
             <button onClick={(e) => { e.stopPropagation(); setDeletingMentor(row); setDeleteOpen(true) }}
-              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
+              disabled={loading}
+              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
               <Trash2 className="w-4 h-4 text-destructive" />
             </button>
           </div>
@@ -202,6 +218,7 @@ export default function MentorListPage() {
             type="text"
             value={form.department}
             onChange={e => setForm({ ...form, department: e.target.value })}
+            maxLength={100}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             required
           />
@@ -213,6 +230,7 @@ export default function MentorListPage() {
             type="text"
             value={form.academicRank}
             onChange={e => setForm({ ...form, academicRank: e.target.value })}
+            maxLength={100}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             required
           />
@@ -224,6 +242,7 @@ export default function MentorListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa hồ sơ giảng viên "${deletingMentor?.fullName}"?`}
       />
     </div>

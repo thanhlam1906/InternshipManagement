@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { userApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -18,6 +18,9 @@ export default function UserListPage() {
   const [editingUser, setEditingUser] = useState(null)
   const [deletingUser, setDeletingUser] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [toggleLoadingId, setToggleLoadingId] = useState(null)
+  const abortRef = useRef(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -29,17 +32,23 @@ export default function UserListPage() {
     try {
       const params = { page, size: 10 }
       if (roleFilter) params.role = roleFilter
-      const res = await userApi.getAll(params)
+      const res = await userApi.getAll(params, { signal: abortRef.current?.signal })
       setUsers(res.data.data.items)
       setPagination(res.data.data.pagination)
     } catch (err) {
-      toast.error('Không thể tải danh sách users')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách users')
+      }
     } finally {
       setLoading(false)
     }
   }, [page, roleFilter])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => {
+    abortRef.current = new AbortController()
+    fetchUsers()
+    return () => { abortRef.current?.abort() }
+  }, [fetchUsers])
 
   const openCreate = () => {
     setEditingUser(null)
@@ -79,6 +88,7 @@ export default function UserListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await userApi.delete(deletingUser.userId)
       toast.success('Xóa thành công!')
@@ -86,16 +96,21 @@ export default function UserListPage() {
       fetchUsers()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
   const handleToggleStatus = async (user) => {
+    setToggleLoadingId(user.userId)
     try {
       await userApi.updateStatus(user.userId, { isActive: !user.isActive })
       toast.success('Cập nhật trạng thái thành công!')
       fetchUsers()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setToggleLoadingId(null)
     }
   }
 
@@ -117,8 +132,10 @@ export default function UserListPage() {
     {
       key: 'isActive', title: 'Trạng thái',
       render: (val, row) => (
-        <button onClick={(e) => { e.stopPropagation(); handleToggleStatus(row) }}
-          className="flex items-center gap-1.5 text-xs font-medium">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleToggleStatus(row) }}
+          disabled={toggleLoadingId === row.userId}
+          className="flex items-center gap-1.5 text-xs font-medium disabled:opacity-50">
           {val ? (
             <><ToggleRight className="w-5 h-5 text-success" /> <span className="text-success">Active</span></>
           ) : (
@@ -211,13 +228,13 @@ export default function UserListPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Email</label>
-          <input type="email" value={form.email}
+          <input type="email" value={form.email} autoComplete="email"
             onChange={e => setForm({ ...form, email: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-          <input type="text" value={form.phoneNumber}
+          <input type="tel" value={form.phoneNumber} autoComplete="tel"
             onChange={e => setForm({ ...form, phoneNumber: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
         </div>
@@ -240,6 +257,7 @@ export default function UserListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa user "${deletingUser?.username}"?`}
       />
     </div>

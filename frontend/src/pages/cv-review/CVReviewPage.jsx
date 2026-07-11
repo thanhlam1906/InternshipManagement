@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cvReviewApi } from '@/services/api'
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Cpu, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -10,13 +10,29 @@ export default function CVReviewPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setLoading(false)
+      setResult(null)
+    }
+  }, [])
+
   const handleFileChange = (e) => {
     const selected = e.target.files[0]
-    if (selected && selected.type === 'application/pdf') {
-      setFile(selected)
-    } else {
+    if (!selected) return
+    const isValidType = selected.type === 'application/pdf'
+    const isValidExt = selected.name && selected.name.toLowerCase().endsWith('.pdf')
+    const isValidSize = selected.size <= 10 * 1024 * 1024 // 10MB
+    if (!isValidType && !isValidExt) {
       toast.error('Vui lòng chọn một file PDF hợp lệ')
+      return
     }
+    if (!isValidSize) {
+      toast.error('File không được vượt quá 10MB')
+      return
+    }
+    setFile(selected)
   }
 
   const handleReview = async (e) => {
@@ -25,8 +41,8 @@ export default function CVReviewPage() {
       toast.error('Vui lòng tải lên file CV PDF')
       return
     }
-    if (!apiKey) {
-      toast.error('Vui lòng nhập API Key cá nhân của bạn')
+    if (!apiKey || apiKey.trim().length < 10) {
+      toast.error('Vui lòng nhập API Key cá nhân hợp lệ (tối thiểu 10 ký tự)')
       return
     }
 

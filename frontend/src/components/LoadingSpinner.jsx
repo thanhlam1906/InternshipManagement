@@ -2,9 +2,9 @@ import { Loader2 } from 'lucide-react'
 
 export default function LoadingSpinner({ text = 'Đang tải...' }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-3">
+    <div role="status" aria-label="Đang tải..." className="flex flex-col items-center justify-center py-16 gap-3">
       <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      <p className="text-sm text-muted-foreground">{text}</p>
+      <p className="text-sm text-muted-foreground" aria-live="polite">{text}</p>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import {
   FileText, LogOut, ChevronLeft, ChevronRight, Target, Link
 } from 'lucide-react'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 const adminNav = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -60,8 +61,12 @@ export default function Sidebar() {
   const navItems = getNavItems(user?.role)
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/login')
+    try {
+      await logout()
+      navigate('/login')
+    } catch (err) {
+      toast.error('Đăng xuất thất bại. Vui lòng thử lại.')
+    }
   }
 
   return (
@@ -81,7 +86,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+      <nav aria-label="Điều hướng chính" className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -105,6 +110,7 @@ export default function Sidebar() {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
+        aria-label={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
         className="mx-2 mb-2 p-2 rounded-lg hover:bg-sidebar-accent transition-colors"
       >
         {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
@@ -120,6 +126,7 @@ export default function Sidebar() {
         )}
         <button
           onClick={handleLogout}
+          aria-label="Đăng xuất"
           className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm
             text-red-400 hover:bg-red-500/10 transition-colors"
         >

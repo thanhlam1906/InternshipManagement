@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { resultApi, assignmentApi, roundApi, roundCriterionApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -31,6 +31,8 @@ export default function ResultListPage() {
   const [editingResult, setEditingResult] = useState(null)
   const [deletingResult, setDeletingResult] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
 
   // Filters (Admin/Mentor)
   const [selectedStudentId, setSelectedStudentId] = useState('')
@@ -67,7 +69,7 @@ export default function ResultListPage() {
     setLoading(true)
     try {
       const params = { page, size: 10 }
-      
+
       if (isStudent) {
         params.studentId = currentUser.userId
       } else {
@@ -76,11 +78,13 @@ export default function ResultListPage() {
         if (selectedRoundId) params.roundId = selectedRoundId
       }
 
-      const res = await resultApi.getAll(params)
+      const res = await resultApi.getAll(params, { signal: abortRef.current?.signal })
       setResults(res.data.data.items || [])
       setPagination(res.data.data.pagination)
     } catch (err) {
-      toast.error('Không thể tải danh sách kết quả đánh giá')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách kết quả đánh giá')
+      }
     } finally {
       setLoading(false)
     }
@@ -91,7 +95,9 @@ export default function ResultListPage() {
   }, [fetchFilters])
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchResults()
+    return () => { abortRef.current?.abort() }
   }, [fetchResults])
 
   // Fetch round criteria when round changes in the form
@@ -138,18 +144,32 @@ export default function ResultListPage() {
     e.preventDefault()
     setFormLoading(true)
     try {
+      const score = parseFloat(form.score)
+      if (isNaN(score)) {
+        toast.error('Điểm số không hợp lệ')
+        setFormLoading(false)
+        return
+      }
       if (editingResult) {
         await resultApi.update(editingResult.id, {
-          score: parseFloat(form.score),
+          score,
           comments: form.comments
         })
         toast.success('Cập nhật điểm đánh giá thành công!')
       } else {
+        const assignmentId = parseInt(form.assignmentId)
+        const roundId = parseInt(form.roundId)
+        const criterionId = parseInt(form.criterionId)
+        if (isNaN(assignmentId) || isNaN(roundId) || isNaN(criterionId)) {
+          toast.error('Vui lòng chọn đầy đủ thông tin')
+          setFormLoading(false)
+          return
+        }
         await resultApi.create({
-          assignmentId: parseInt(form.assignmentId),
-          roundId: parseInt(form.roundId),
-          criterionId: parseInt(form.criterionId),
-          score: parseFloat(form.score),
+          assignmentId,
+          roundId,
+          criterionId,
+          score,
           comments: form.comments
         })
         toast.success('Đánh giá sinh viên thành công!')
@@ -164,6 +184,7 @@ export default function ResultListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await resultApi.delete(deletingResult.id)
       toast.success('Xóa điểm đánh giá thành công!')
@@ -171,6 +192,8 @@ export default function ResultListPage() {
       fetchResults()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -228,7 +251,7 @@ export default function ResultListPage() {
             <select value={selectedStudentId} onChange={e => { setSelectedStudentId(e.target.value); setPage(0) }}
               className="w-full px-3 py-2 rounded-lg border border-input text-sm bg-white">
               <option value="">Tất cả sinh viên đang hướng dẫn</option>
-              {assignments.map(a => <option key={a.studentId} value={a.studentId}>{a.studentName} ({a.studentCode})</option>)}
+              {assignments.map(a => <option key={a.id} value={a.studentId}>{a.studentName} ({a.studentCode})</option>)}
             </select>
           </div>
           <div>
@@ -299,7 +322,9 @@ export default function ResultListPage() {
           <label className="block text-sm font-medium mb-1">Điểm số</label>
           <input
             type="number"
-            step="0.1"
+            step="0.01"
+            min="0"
+            max={roundCriteria.find(rc => rc.criterionId === parseInt(form.criterionId))?.maxScore || undefined}
             value={form.score}
             onChange={e => setForm({ ...form, score: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -322,6 +347,7 @@ export default function ResultListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa điểm đánh giá này?`}
       />
     </div>

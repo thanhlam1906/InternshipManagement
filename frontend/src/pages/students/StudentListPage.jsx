@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { studentApi, userApi } from '@/services/api'
 import DataTable from '@/components/DataTable'
 import DeleteDialog from '@/components/DeleteDialog'
@@ -21,7 +21,9 @@ export default function StudentListPage() {
   const [editingStudent, setEditingStudent] = useState(null)
   const [deletingStudent, setDeletingStudent] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
-  
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const abortRef = useRef(null)
+
   // Available users to link
   const [studentUsers, setStudentUsers] = useState([])
 
@@ -39,20 +41,23 @@ export default function StudentListPage() {
     setLoading(true)
     try {
       if (isStudent) {
-        // A student might only get their own profile. Let's see what backend returns.
-        // Actually /students endpoint returns list. If it fails for students, we'll try to fetch by id.
+        // Student fetches all and filters to own profile by user ID linkage
         try {
-          const res = await studentApi.getById(currentUser.userId)
-          setStudents([res.data.data])
+          const res = await studentApi.getAll({ signal: abortRef.current?.signal })
+          const all = res.data.data || []
+          const own = all.filter(s => s.userId === currentUser.userId)
+          setStudents(own)
         } catch {
           setStudents([])
         }
       } else {
-        const res = await studentApi.getAll()
+        const res = await studentApi.getAll({ signal: abortRef.current?.signal })
         setStudents(res.data.data || [])
       }
     } catch (err) {
-      toast.error('Không thể tải danh sách sinh viên')
+      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
+        toast.error('Không thể tải danh sách sinh viên')
+      }
     } finally {
       setLoading(false)
     }
@@ -60,7 +65,7 @@ export default function StudentListPage() {
 
   const fetchStudentUsers = async () => {
     try {
-      const res = await userApi.getAll({ role: 'STUDENT', size: 100 })
+      const res = await userApi.getAll({ role: 'STUDENT', size: 100 }, { signal: abortRef.current?.signal })
       // Filter out users who already have student profiles
       const usersList = res.data.data.items || []
       const existingUserIds = students.map(s => s.id) // backend StudentResponse maps userId as 'id' or student has it.
@@ -73,7 +78,9 @@ export default function StudentListPage() {
   }
 
   useEffect(() => {
+    abortRef.current = new AbortController()
     fetchStudents()
+    return () => { abortRef.current?.abort() }
   }, [fetchStudents])
 
   const openCreate = () => {
@@ -120,11 +127,16 @@ export default function StudentListPage() {
       } else {
         if (!form.userId) {
           toast.error('Vui lòng chọn tài khoản liên kết')
+          return
+        }
+        const parsedUserId = parseInt(form.userId)
+        if (isNaN(parsedUserId)) {
+          toast.error('ID tài khoản không hợp lệ')
           setFormLoading(false)
           return
         }
         await studentApi.create({
-          userId: parseInt(form.userId),
+          userId: parsedUserId,
           studentCode: form.studentCode,
           major: form.major,
           clazz: form.clazz,
@@ -143,6 +155,7 @@ export default function StudentListPage() {
   }
 
   const handleDelete = async () => {
+    setDeleteLoading(true)
     try {
       await studentApi.delete(deletingStudent.id)
       toast.success('Xóa thông tin sinh viên thành công!')
@@ -150,6 +163,8 @@ export default function StudentListPage() {
       fetchStudents()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -164,7 +179,7 @@ export default function StudentListPage() {
       key: 'actions', title: '',
       render: (_, row) => {
         // Admin has full CRUD, Student can edit own profile
-        const canEdit = isAdmin || (isStudent && row.id === currentUser.userId)
+        const canEdit = isAdmin || (isStudent && row.userId === currentUser.userId)
         const canDelete = isAdmin
         
         if (!canEdit && !canDelete) return null
@@ -173,13 +188,15 @@ export default function StudentListPage() {
           <div className="flex gap-1">
             {canEdit && (
               <button onClick={(e) => { e.stopPropagation(); openEdit(row) }}
-                className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                disabled={loading}
+                className="p-1.5 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50">
                 <Edit className="w-4 h-4 text-muted-foreground" />
               </button>
             )}
             {canDelete && (
               <button onClick={(e) => { e.stopPropagation(); setDeletingStudent(row); setDeleteOpen(true) }}
-                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                disabled={loading}
+                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
                 <Trash2 className="w-4 h-4 text-destructive" />
               </button>
             )}
@@ -246,6 +263,8 @@ export default function StudentListPage() {
             onChange={e => setForm({ ...form, studentCode: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             required
+            maxLength={50}
+            autoComplete="off"
           />
         </div>
 
@@ -284,6 +303,7 @@ export default function StudentListPage() {
           <textarea
             value={form.address}
             onChange={e => setForm({ ...form, address: e.target.value })}
+            maxLength={500}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px]"
           />
         </div>
@@ -294,6 +314,7 @@ export default function StudentListPage() {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
+        loading={deleteLoading}
         message={`Bạn có chắc muốn xóa hồ sơ sinh viên "${deletingStudent?.fullName}"?`}
       />
     </div>

@@ -1,27 +1,18 @@
 import { useAuth } from '@/context/AuthContext'
-import { Bell, Search } from 'lucide-react'
+import { Bell } from 'lucide-react'
 
 export default function Header() {
   const { user } = useAuth()
 
   return (
     <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            className="pl-10 pr-4 py-2 rounded-lg bg-secondary border-0 text-sm w-64
-              focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-          />
-        </div>
-      </div>
+      {/* Search - coming soon */}
+      <div className="flex items-center gap-4" />
 
       <div className="flex items-center gap-4">
-        <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
+        {/* Notifications - coming soon */}
+        <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors" aria-label="Thông báo">
           <Bell className="w-5 h-5 text-muted-foreground" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
         </button>
 
         <div className="flex items-center gap-3">
