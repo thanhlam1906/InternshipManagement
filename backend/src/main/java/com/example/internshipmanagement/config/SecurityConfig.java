@@ -87,7 +87,14 @@ public class SecurityConfig {
                     .requestMatchers("/api/jobs/**").hasRole("STUDENT")
                     // CV Review - only students can review
                     .requestMatchers("/api/cv/**").hasRole("STUDENT")
-                .anyRequest().authenticated()
+                    // Frontend SPA — static assets & client-side routes (public)
+                    .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
+                    .requestMatchers("/assets/**", "/static/**").permitAll()
+                    .requestMatchers("/*.js", "/*.css", "/*.png", "/*.svg", "/*.ico", "/*.json").permitAll()
+                    // Any other non-API path is an SPA route — permit so React Router handles it
+                    .requestMatchers(request -> !request.getRequestURI().startsWith("/api/")).permitAll()
+                    // Everything else (including unknown /api/ paths) requires auth
+                    .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
