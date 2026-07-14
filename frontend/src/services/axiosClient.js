@@ -6,7 +6,9 @@ const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 30000,
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  // No default Content-Type — axios auto-detects:
+  //   plain objects → application/json
+  //   FormData      → multipart/form-data (with boundary)
 });
 
 axiosClient.interceptors.request.use((config) => {
