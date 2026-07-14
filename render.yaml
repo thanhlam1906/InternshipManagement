@@ -15,9 +15,9 @@ services:
         value: update
       # --- Supabase PostgreSQL ---
       - key: DB_URL
-        value: jdbc:postgresql://aws-0-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+        value: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
       - key: DB_USERNAME
-        value: postgres
+        value: postgres.tsrutjqagdghcqexlkrf
       - key: DB_PASSWORD
         sync: false
       # --- JWT secret — Render tu sinh ra ---
