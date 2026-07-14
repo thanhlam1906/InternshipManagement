@@ -4,7 +4,7 @@ import com.example.internshipmanagement.config.CustomUserDetails;
 import com.example.internshipmanagement.config.RateLimiter;
 import com.example.internshipmanagement.dto.response.cv.CVReviewResponse;
 import com.example.internshipmanagement.entity.Student;
-import com.example.internshipmanagement.exception.ResourceNotFoundException;
+
 import com.example.internshipmanagement.repository.IStudentRepository;
 import com.example.internshipmanagement.service.CVReviewService;
 import com.example.internshipmanagement.service.PDFExtractorService;
@@ -75,11 +75,15 @@ public class CVReviewServiceImpl implements CVReviewService {
 
     /**
      * Get the major of the currently logged-in student.
+     * Falls back to "General" if no Student record exists yet
+     * (e.g. newly registered user whose Student profile hasn't been created).
      */
     private String getCurrentStudentMajor(Integer userId) {
-        Student student = studentRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Khong tim thay thong tin sinh vien voi id: " + userId));
+        Student student = studentRepository.findById(userId).orElse(null);
+        if (student == null) {
+            log.warn("No Student record found for userId={} — using default major 'General'", userId);
+            return "General";
+        }
 
         String major = student.getMajor();
         if (major == null || major.isBlank()) {
