@@ -9,8 +9,8 @@ services:
       # --- Spring profile ---
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      # JPA: 'update' cho lan deploy dau tien de tao bang.
-      # Sau khi bang da tao xong, chuyen thanh 'validate' de an toan.
+      # JPA: 'update' — tu dong tao/them bang khi entity thay doi,
+      # khong xoa data hay drop column. An toan de giu vinh vien.
       - key: JPA_DDL_AUTO
         value: update
       # --- Supabase PostgreSQL ---
