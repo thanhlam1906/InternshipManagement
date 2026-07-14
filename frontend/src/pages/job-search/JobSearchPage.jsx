@@ -4,29 +4,39 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { Search, MapPin, Briefcase, DollarSign, Calendar, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const ERROR_TOAST_ID = 'job-search-error'
+
 export default function JobSearchPage() {
   const [jobs, setJobs] = useState([])
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const abortRef = useRef(null)
 
-  // Search parameters
+  // Search parameters — typing here does NOT trigger API calls
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState('')
   const [page, setPage] = useState(1)
-  const [byMajor, setByMajor] = useState(true) // default to search by major automatically
+  const [byMajor, setByMajor] = useState(true)
+
+  // Increment this to trigger a fresh fetch (form submit / reset / page change)
+  const [searchTrigger, setSearchTrigger] = useState(0)
+
+  // Hold the *active* search params (the ones actually sent to the API)
+  // in a ref so fetchJobs doesn't need them in its dependency array.
+  const activeParamsRef = useRef({ keyword: '', location: '', byMajor: true })
 
   const fetchJobs = useCallback(async () => {
     setLoading(true)
     try {
       let res
+      const { keyword: kw, location: loc, byMajor: major } = activeParamsRef.current
       const params = { page, pageSize: 10 }
 
-      if (byMajor) {
+      if (major) {
         res = await jobSearchApi.searchByMajor(params, { signal: abortRef.current?.signal })
       } else {
-        if (keyword) params.keyword = keyword
-        if (location) params.location = location
+        if (kw) params.keyword = kw
+        if (loc) params.location = loc
         res = await jobSearchApi.search(params, { signal: abortRef.current?.signal })
       }
 
@@ -36,14 +46,22 @@ export default function JobSearchPage() {
         totalPages: res.data.data.totalPages || 1
       })
     } catch (err) {
-      if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
-        toast.error('Không thể tìm kiếm công việc. Vui lòng kiểm tra lại cấu hình JSearch API key.')
-      }
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+
+      // Extract the actual backend error message if available
+      const serverMsg = err.response?.data?.message
+      const fallback = 'Không thể tìm kiếm công việc. Vui lòng thử lại sau.'
+      const message = serverMsg || fallback
+
+      // Deduplicate: only one error toast at a time
+      toast.error(message, { id: ERROR_TOAST_ID })
     } finally {
       setLoading(false)
     }
-  }, [page, byMajor, keyword, location])
+  }, [page, searchTrigger])
 
+  // Fetch on mount and when page or searchTrigger changes.
+  // keyword/location changes do NOT cause a re-fetch (keystroke spam fix).
   useEffect(() => {
     abortRef.current = new AbortController()
     fetchJobs()
@@ -52,17 +70,26 @@ export default function JobSearchPage() {
 
   const handleSearch = useCallback((e) => {
     e.preventDefault()
-    setByMajor(false)
+    activeParamsRef.current = { keyword, location, byMajor: false }
     setPage(1)
-    // useEffect will pick up the new byMajor/page values and call fetchJobs
-  }, [])
+    setByMajor(false)
+    setSearchTrigger(t => t + 1)
+  }, [keyword, location])
 
   const handleResetByMajor = useCallback(() => {
-    setByMajor(true)
+    activeParamsRef.current = { keyword: '', location: '', byMajor: true }
     setKeyword('')
     setLocation('')
     setPage(1)
-    // useEffect will pick up the changed state values and call fetchJobs
+    setByMajor(true)
+    setSearchTrigger(t => t + 1)
+  }, [])
+
+  // When page changes via pagination buttons, update activeParams to stay in sync
+  // (keyword/location/mode already in ref, just re-fetch with new page)
+  const handlePageChange = useCallback((newPage) => {
+    setPage(newPage)
+    setSearchTrigger(t => t + 1)
   }, [])
 
   return (
@@ -113,8 +140,8 @@ export default function JobSearchPage() {
             type="button"
             onClick={handleResetByMajor}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
-              byMajor 
-                ? 'bg-accent/15 text-accent border border-accent/20' 
+              byMajor
+                ? 'bg-accent/15 text-accent border border-accent/20'
                 : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
             }`}
           >
@@ -195,7 +222,7 @@ export default function JobSearchPage() {
               {pagination.totalPages > 1 && (
                 <div className="flex justify-center gap-2 pt-4">
                   <button
-                    onClick={() => setPage(p => Math.max(p - 1, 1))}
+                    onClick={() => handlePageChange(Math.max(page - 1, 1))}
                     disabled={page === 1}
                     className="px-3 py-1.5 rounded-lg border border-border bg-white text-sm disabled:opacity-40"
                   >
@@ -205,7 +232,7 @@ export default function JobSearchPage() {
                     Trang {page} / {pagination.totalPages}
                   </span>
                   <button
-                    onClick={() => setPage(p => Math.min(p + 1, pagination.totalPages))}
+                    onClick={() => handlePageChange(Math.min(page + 1, pagination.totalPages))}
                     disabled={page >= pagination.totalPages}
                     className="px-3 py-1.5 rounded-lg border border-border bg-white text-sm disabled:opacity-40"
                   >

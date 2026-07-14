@@ -8,7 +8,7 @@ export const authApi = {
 }
 
 export const userApi = {
-  getAll: (params) => axiosClient.get('/users', { params }),
+  getAll: (params, config) => axiosClient.get('/users', { params, ...config }),
   getById: (id) => axiosClient.get(`/users/${id}`),
   create: (data) => axiosClient.post('/users', data),
   update: (id, data) => axiosClient.put(`/users/${id}`, data),
@@ -18,7 +18,7 @@ export const userApi = {
 }
 
 export const studentApi = {
-  getAll: () => axiosClient.get('/students'),
+  getAll: (params, config) => axiosClient.get('/students', { params, ...config }),
   getById: (id) => axiosClient.get(`/students/${id}`),
   create: (data) => axiosClient.post('/students', data),
   update: (id, data) => axiosClient.put(`/students/${id}`, data),
@@ -26,7 +26,7 @@ export const studentApi = {
 }
 
 export const mentorApi = {
-  getAll: () => axiosClient.get('/mentors'),
+  getAll: (params, config) => axiosClient.get('/mentors', { params, ...config }),
   getById: (id) => axiosClient.get(`/mentors/${id}`),
   create: (data) => axiosClient.post('/mentors', data),
   update: (id, data) => axiosClient.put(`/mentors/${id}`, data),
@@ -34,7 +34,7 @@ export const mentorApi = {
 }
 
 export const phaseApi = {
-  getAll: (params) => axiosClient.get('/internship-phases', { params }),
+  getAll: (params, config) => axiosClient.get('/internship-phases', { params, ...config }),
   getById: (id) => axiosClient.get(`/internship-phases/${id}`),
   create: (data) => axiosClient.post('/internship-phases', data),
   update: (id, data) => axiosClient.put(`/internship-phases/${id}`, data),
@@ -42,16 +42,16 @@ export const phaseApi = {
 }
 
 export const assignmentApi = {
-  getAll: (params) => axiosClient.get('/internship_assignments', { params }),
-  getById: (id) => axiosClient.get(`/internship_assignments/${id}`),
-  create: (data) => axiosClient.post('/internship_assignments', data),
-  update: (id, data) => axiosClient.put(`/internship_assignments/${id}`, data),
-  updateStatus: (id, data) => axiosClient.put(`/internship_assignments/${id}/status`, data),
-  delete: (id) => axiosClient.delete(`/internship_assignments/${id}`),
+  getAll: (params, config) => axiosClient.get('/internship-assignments', { params, ...config }),
+  getById: (id) => axiosClient.get(`/internship-assignments/${id}`),
+  create: (data) => axiosClient.post('/internship-assignments', data),
+  update: (id, data) => axiosClient.put(`/internship-assignments/${id}`, data),
+  updateStatus: (id, data) => axiosClient.put(`/internship-assignments/${id}/status`, data),
+  delete: (id) => axiosClient.delete(`/internship-assignments/${id}`),
 }
 
 export const roundApi = {
-  getAll: (params) => axiosClient.get('/assessment-rounds', { params }),
+  getAll: (params, config) => axiosClient.get('/assessment-rounds', { params, ...config }),
   getById: (id) => axiosClient.get(`/assessment-rounds/${id}`),
   create: (data) => axiosClient.post('/assessment-rounds', data),
   update: (id, data) => axiosClient.put(`/assessment-rounds/${id}`, data),
@@ -59,7 +59,7 @@ export const roundApi = {
 }
 
 export const criterionApi = {
-  getAll: () => axiosClient.get('/evaluation-criteria'),
+  getAll: (params, config) => axiosClient.get('/evaluation-criteria', { params, ...config }),
   getById: (id) => axiosClient.get(`/evaluation-criteria/${id}`),
   create: (data) => axiosClient.post('/evaluation-criteria', data),
   update: (id, data) => axiosClient.put(`/evaluation-criteria/${id}`, data),
@@ -67,19 +67,19 @@ export const criterionApi = {
 }
 
 export const roundCriterionApi = {
-  getAll: (params) => axiosClient.get('/round_criteria', { params }),
-  getById: (id) => axiosClient.get(`/round_criteria/${id}`),
-  create: (data) => axiosClient.post('/round_criteria', data),
-  update: (id, data) => axiosClient.put(`/round_criteria/${id}`, data),
-  delete: (id) => axiosClient.delete(`/round_criteria/${id}`),
+  getAll: (params, config) => axiosClient.get('/round-criteria', { params, ...config }),
+  getById: (id) => axiosClient.get(`/round-criteria/${id}`),
+  create: (data) => axiosClient.post('/round-criteria', data),
+  update: (id, data) => axiosClient.put(`/round-criteria/${id}`, data),
+  delete: (id) => axiosClient.delete(`/round-criteria/${id}`),
 }
 
 export const resultApi = {
-  getAll: (params) => axiosClient.get('/assessment_results', { params }),
-  getById: (id) => axiosClient.get(`/assessment_results/${id}`),
-  create: (data) => axiosClient.post('/assessment_results', data),
-  update: (id, data) => axiosClient.put(`/assessment_results/${id}`, data),
-  delete: (id) => axiosClient.delete(`/assessment_results/${id}`),
+  getAll: (params, config) => axiosClient.get('/assessment-results', { params, ...config }),
+  getById: (id) => axiosClient.get(`/assessment-results/${id}`),
+  create: (data) => axiosClient.post('/assessment-results', data),
+  update: (id, data) => axiosClient.put(`/assessment-results/${id}`, data),
+  delete: (id) => axiosClient.delete(`/assessment-results/${id}`),
 }
 
 export const cvReviewApi = {
@@ -106,6 +106,6 @@ export const cvReviewApi = {
 }
 
 export const jobSearchApi = {
-  search: (params) => axiosClient.get('/jobs/search', { params }),
-  searchByMajor: (params) => axiosClient.get('/jobs/search/by-major', { params }),
+  search: (params, config) => axiosClient.get('/jobs/search', { params, ...config }),
+  searchByMajor: (params, config) => axiosClient.get('/jobs/search/by-major', { params, ...config }),
 }

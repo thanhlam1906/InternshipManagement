@@ -36,7 +36,7 @@ export default function MentorListPage() {
     setLoading(true)
     try {
       const res = await mentorApi.getAll({ signal: abortRef.current?.signal })
-      setMentors(res.data.data || [])
+      setMentors(res.data.data.items || [])
     } catch (err) {
       if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
         toast.error('Không thể tải danh sách giảng viên')

@@ -58,8 +58,8 @@ export default function AssignmentListPage() {
         mentorApi.getAll()
       ])
       setPhases(phaseRes.data.data.items || [])
-      setStudents(studentRes.data.data || [])
-      setMentors(mentorRes.data.data || [])
+      setStudents(studentRes.data.data.items || [])
+      setMentors(mentorRes.data.data.items || [])
     } catch (err) {
       console.error('Failed to load filter options')
     }

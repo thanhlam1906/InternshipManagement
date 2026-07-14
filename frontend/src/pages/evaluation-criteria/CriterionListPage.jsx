@@ -33,7 +33,7 @@ export default function CriterionListPage() {
     setLoading(true)
     try {
       const res = await criterionApi.getAll({ signal: abortRef.current?.signal })
-      setCriteria(res.data.data || [])
+      setCriteria(res.data.data.items || [])
     } catch (err) {
       if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {
         toast.error('Không thể tải danh sách tiêu chí đánh giá')

@@ -2,8 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import {
   LayoutDashboard, Users, GraduationCap, UserCheck, Calendar,
-  ClipboardList, Award, ListChecks, FileSearch, Briefcase,
-  FileText, LogOut, ChevronLeft, ChevronRight, Target, Link
+  ClipboardList, Award, ListChecks, LogOut, ChevronLeft, ChevronRight, Target, Link
 } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
@@ -13,7 +12,7 @@ const adminNav = [
   { to: '/users', icon: Users, label: 'Quản lý Users' },
   { to: '/students', icon: GraduationCap, label: 'Sinh viên' },
   { to: '/mentors', icon: UserCheck, label: 'Giảng viên' },
-  { to: '/phases', icon: Calendar, label: 'Đợt thực tập' },
+  { to: '/phases', icon: Calendar, label: 'Đợt thực tập & Đánh giá' },
   { to: '/assignments', icon: ClipboardList, label: 'Phân công' },
   { to: '/assessment-rounds', icon: Award, label: 'Đợt đánh giá' },
   { to: '/evaluation-criteria', icon: ListChecks, label: 'Tiêu chí' },
@@ -24,25 +23,14 @@ const adminNav = [
 const mentorNav = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/students', icon: GraduationCap, label: 'Sinh viên' },
-  { to: '/mentors', icon: UserCheck, label: 'Giảng viên' },
-  { to: '/phases', icon: Calendar, label: 'Đợt thực tập' },
   { to: '/assignments', icon: ClipboardList, label: 'Phân công' },
   { to: '/assessment-rounds', icon: Award, label: 'Đợt đánh giá' },
-  { to: '/evaluation-criteria', icon: ListChecks, label: 'Tiêu chí' },
-  { to: '/round-criteria', icon: Link, label: 'Tiêu chí đợt' },
   { to: '/assessment-results', icon: Target, label: 'Kết quả' },
 ]
 
+// STUDENT uses StudentLayout, not this sidebar — kept for fallback only
 const studentNav = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/students', icon: GraduationCap, label: 'Thông tin SV' },
-  { to: '/mentors', icon: UserCheck, label: 'Giảng viên' },
-  { to: '/phases', icon: Calendar, label: 'Đợt thực tập' },
-  { to: '/assignments', icon: ClipboardList, label: 'Phân công' },
-  { to: '/assessment-rounds', icon: Award, label: 'Đợt đánh giá' },
-  { to: '/assessment-results', icon: Target, label: 'Kết quả' },
-  { to: '/cv-review', icon: FileText, label: 'Review CV' },
-  { to: '/job-search', icon: Briefcase, label: 'Tìm việc' },
 ]
 
 function getNavItems(role) {

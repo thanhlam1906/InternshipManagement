@@ -43,7 +43,7 @@ export default function RoundCriterionListPage() {
       ])
       const fetchedRounds = roundsRes.data.data.items || []
       setRounds(fetchedRounds)
-      setCriteria(criteriaRes.data.data || [])
+      setCriteria(criteriaRes.data.data.items || [])
       
       // Auto select first round if available
       if (fetchedRounds.length > 0) {

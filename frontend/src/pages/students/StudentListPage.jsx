@@ -44,7 +44,7 @@ export default function StudentListPage() {
         // Student fetches all and filters to own profile by user ID linkage
         try {
           const res = await studentApi.getAll({ signal: abortRef.current?.signal })
-          const all = res.data.data || []
+          const all = res.data.data.items || []
           const own = all.filter(s => s.userId === currentUser.userId)
           setStudents(own)
         } catch {
@@ -52,7 +52,7 @@ export default function StudentListPage() {
         }
       } else {
         const res = await studentApi.getAll({ signal: abortRef.current?.signal })
-        setStudents(res.data.data || [])
+        setStudents(res.data.data.items || [])
       }
     } catch (err) {
       if (err.name !== 'AbortError' && err.code !== 'ERR_CANCELED') {

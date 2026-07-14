@@ -53,7 +53,7 @@ export default function RoundListPage() {
         criterionApi.getAll()
       ])
       setPhases(phaseRes.data.data.items || [])
-      setCriteria(criterionRes.data.data || [])
+      setCriteria(criterionRes.data.data.items || [])
     } catch (err) {
       console.error('Failed to load filter options')
     }
