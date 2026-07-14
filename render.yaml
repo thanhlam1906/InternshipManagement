@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: internship-api
+    runtime: docker
+    repo: https://github.com/thanhlam1906/InternshipManagement
+    rootDir: backend
+    plan: free
+    region: singapore
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JPA_DDL_AUTO
+        value: update
