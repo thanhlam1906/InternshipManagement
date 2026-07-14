@@ -145,11 +145,10 @@ public class GeminiClient {
                 {
                     "overallScore": <diem tu 1 den 10>,
                     "summary": "<tom tat ngan gon ve CV>",
-                    "formatFeedback": "<nhan xet ve dinh dang, bo cuc, trinh bay>",
-                    "contentFeedback": "<nhan xet ve noi dung, kinh nghiem, ky nang>",
+                    "contentFeedback": "<nhan xet chi ve noi dung, kinh nghiem, ky nang phan tich cac du an xem da viet hoan chinh chua>",
                     "strengthPoints": "<cac diem manh cua CV>",
-                    "improvementSuggestions": "<goi y cai thien cu the>",
-                    "majorRelevance": "<danh gia muc do phu hop voi nganh %s>"
+                    "improvementSuggestions": "<goi y cai thien cu the theo tung du an trong cv da danh gia>",
+                    
                 }
                 """.formatted(major, cvText, major);
     }

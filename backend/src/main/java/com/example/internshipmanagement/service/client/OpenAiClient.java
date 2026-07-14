@@ -131,21 +131,20 @@ public class OpenAiClient {
         return """
                 Ban la mot chuyen gia tuyen dung va review CV voi 10 nam kinh nghiem.
                 Hay danh gia CV duoi day cua mot sinh vien nganh "%s" dang tim kiem co hoi thuc tap.
-
+                
                 CV content:
                 ---
                 %s
                 ---
-
-                Hay tra ve danh gia theo dinh dang JSON chinh xac nhu sau (chi tra ve JSON, khong them text nao khac):
+                
+                Hay tra ve danh gia theo dinh dang JSON chinh xac nhu sau (khong them bat ky text nao khac):
                 {
                     "overallScore": <diem tu 1 den 10>,
                     "summary": "<tom tat ngan gon ve CV>",
-                    "formatFeedback": "<nhan xet ve dinh dang, bo cuc, trinh bay>",
-                    "contentFeedback": "<nhan xet ve noi dung, kinh nghiem, ky nang>",
+                    "contentFeedback": "<nhan xet chi ve noi dung, kinh nghiem, ky nang phan tich cac du an xem da viet hoan chinh chua>",
                     "strengthPoints": "<cac diem manh cua CV>",
-                    "improvementSuggestions": "<goi y cai thien cu the>",
-                    "majorRelevance": "<danh gia muc do phu hop voi nganh %s>"
+                    "improvementSuggestions": "<goi y cai thien cu the theo tung du an trong cv da danh gia>",
+                    
                 }
                 """.formatted(major, cvText, major);
     }
