@@ -13,26 +13,17 @@ services:
       # Sau khi bang da tao xong, chuyen thanh 'validate' de an toan.
       - key: JPA_DDL_AUTO
         value: update
-      # --- Database — tu dong lay tu Render PostgreSQL service ---
+      # --- Supabase PostgreSQL ---
+      # Format: jdbc:postgresql://db.<your-project>.supabase.co:5432/postgres
       - key: DB_URL
-        fromDatabase:
-          name: internship-db
-          property: connectionString
+        sync: false
       - key: DB_USERNAME
-        fromDatabase:
-          name: internship-db
-          property: user
+        value: postgres
       - key: DB_PASSWORD
-        fromDatabase:
-          name: internship-db
-          property: password
+        sync: false
       # --- JWT secret — Render tu sinh ra ---
       - key: JWT_SECRET
         generateValue: true
-      # --- OAuth2 redirect (can update later) ---
+      # --- OAuth2 redirect (update lại khi deploy xong) ---
       - key: OAUTH2_REDIRECT_URI
         value: http://localhost:5173/oauth2/callback
-
-databases:
-  - name: internship-db
-    plan: free
