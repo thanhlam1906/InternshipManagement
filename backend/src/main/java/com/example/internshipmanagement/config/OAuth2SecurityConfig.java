@@ -2,7 +2,7 @@ package com.example.internshipmanagement.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "spring.security.oauth2.client.registration.google.client-id")
+@ConditionalOnExpression("T(org.springframework.util.StringUtils).hasText('${spring.security.oauth2.client.registration.google.client-id:}')")
 @RequiredArgsConstructor
 public class OAuth2SecurityConfig {
 
