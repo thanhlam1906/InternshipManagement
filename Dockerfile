@@ -36,4 +36,4 @@ EXPOSE 10000
 # Serve frontend static files from /app/static (mounted from frontend build stage)
 # spa.static-locations tells SpaWebConfig where to find frontend files
 # PORT is set by Render automatically
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Dapp.spa.static-locations=file:/app/static/ -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Xmx256m -Xss512k -Dserver.port=${PORT:-8080} -Dapp.spa.static-locations=file:/app/static/ -jar app.jar"]
