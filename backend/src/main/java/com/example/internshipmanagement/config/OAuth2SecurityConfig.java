@@ -16,7 +16,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Separate security configuration for OAuth2 (Google) login.
@@ -35,30 +34,39 @@ public class OAuth2SecurityConfig {
 
     /**
      * Custom resolver that adds prompt=select_account to force Google
-     * to show the account picker on every login, preventing auto-login
-     * with a previously authorized Google session.
+     * to show the account picker on every login attempt, preventing
+     * automatic sign-in with a previously authorized Google session.
      */
     private OAuth2AuthorizationRequestResolver authorizationRequestResolver() {
         DefaultOAuth2AuthorizationRequestResolver defaultResolver =
             new DefaultOAuth2AuthorizationRequestResolver(
                 clientRegistrationRepository, "/oauth2/authorization");
 
-        return request -> {
-            OAuth2AuthorizationRequest authorizationRequest = defaultResolver.resolve(request);
-            if (authorizationRequest == null) return null;
-            return customizeAuthorizationRequest(authorizationRequest);
-        };
-    }
+        return new OAuth2AuthorizationRequestResolver() {
+            @Override
+            public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+                OAuth2AuthorizationRequest req = defaultResolver.resolve(request);
+                return req != null ? customize(req) : null;
+            }
 
-    private OAuth2AuthorizationRequest customizeAuthorizationRequest(
-            OAuth2AuthorizationRequest authorizationRequest) {
-        Map<String, Object> additionalParameters =
-            new HashMap<>(authorizationRequest.getAdditionalParameters());
-        // Force Google to show the account picker on every login attempt
-        additionalParameters.put("prompt", "select_account");
-        return OAuth2AuthorizationRequest.from(authorizationRequest)
-            .additionalParameters(additionalParameters)
-            .build();
+            @Override
+            public OAuth2AuthorizationRequest resolve(
+                    HttpServletRequest request, String clientRegistrationId) {
+                OAuth2AuthorizationRequest req =
+                    defaultResolver.resolve(request, clientRegistrationId);
+                return req != null ? customize(req) : null;
+            }
+
+            private OAuth2AuthorizationRequest customize(
+                    OAuth2AuthorizationRequest authReq) {
+                Map<String, Object> extra =
+                    new HashMap<>(authReq.getAdditionalParameters());
+                extra.put("prompt", "select_account");
+                return OAuth2AuthorizationRequest.from(authReq)
+                    .additionalParameters(extra)
+                    .build();
+            }
+        };
     }
 
     /**
