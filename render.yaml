@@ -15,7 +15,7 @@ services:
         value: update
       # --- Supabase PostgreSQL ---
       - key: DB_URL
-        value: jdbc:postgresql://db.tsrutjqagdghcqexlkrf.supabase.co:5432/postgres?sslmode=require
+        value: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require
       - key: DB_USERNAME
         value: postgres
       - key: DB_PASSWORD
