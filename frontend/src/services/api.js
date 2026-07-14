@@ -87,9 +87,10 @@ export const cvReviewApi = {
   reviewWithGemini: (file, apiKey) => {
     const formData = new FormData()
     formData.append('file', file)
+    // Do NOT set Content-Type manually — axios auto-detects FormData
+    // and sets the correct multipart/form-data header WITH boundary.
     return axiosClient.post('/cv/review', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
         'X-Gemini-Api-Key': apiKey,
       },
     })
@@ -97,9 +98,10 @@ export const cvReviewApi = {
   reviewWithOpenAi: (file, apiKey) => {
     const formData = new FormData()
     formData.append('file', file)
+    // Do NOT set Content-Type manually — axios auto-detects FormData
+    // and sets the correct multipart/form-data header WITH boundary.
     return axiosClient.post('/cv/review/openai', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
         'X-OpenAI-Api-Key': apiKey,
       },
     })
