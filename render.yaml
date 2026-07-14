@@ -14,9 +14,8 @@ services:
       - key: JPA_DDL_AUTO
         value: update
       # --- Supabase PostgreSQL ---
-      # Format: jdbc:postgresql://db.<your-project>.supabase.co:5432/postgres
       - key: DB_URL
-        sync: false
+        value: jdbc:postgresql://db.tsrutjqagdghcqexlkrf.supabase.co:5432/postgres?sslmode=require
       - key: DB_USERNAME
         value: postgres
       - key: DB_PASSWORD
