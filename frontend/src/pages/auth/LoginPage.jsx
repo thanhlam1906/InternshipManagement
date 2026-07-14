@@ -6,6 +6,10 @@ import toast from 'react-hot-toast'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
+// In production, frontend & backend share the same domain → use relative URL
+// In dev, they run on separate ports → use API_BASE_URL
+const OAUTH2_BASE_URL = import.meta.env.PROD ? '' : API_BASE_URL
+
 export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -132,7 +136,7 @@ export default function LoginPage() {
 
             {/* Google Login Button */}
             <a
-              href={`${API_BASE_URL}/oauth2/authorization/google`}
+              href={`${OAUTH2_BASE_URL}/oauth2/authorization/google`}
               className="w-full py-2.5 rounded-lg border border-gray-300 bg-white
                 text-foreground font-medium text-sm
                 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"

@@ -5,7 +5,6 @@ import com.example.internshipmanagement.config.RateLimiter;
 import com.example.internshipmanagement.dto.request.job.JobSearchRequest;
 import com.example.internshipmanagement.dto.response.job.JobSearchResultResponse;
 import com.example.internshipmanagement.entity.Student;
-import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import com.example.internshipmanagement.repository.IStudentRepository;
 import com.example.internshipmanagement.service.JobSearchService;
 import com.example.internshipmanagement.service.client.JSearchClient;
@@ -67,11 +66,14 @@ public class JobSearchServiceImpl implements JobSearchService {
 
     /**
      * Get the major of the currently logged-in student.
+     * Falls back to "General" if no Student record exists yet (e.g. newly registered user).
      */
     private String getCurrentStudentMajor(Integer userId) {
-        Student student = studentRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Khong tim thay thong tin sinh vien voi id: " + userId));
+        Student student = studentRepository.findById(userId).orElse(null);
+        if (student == null) {
+            log.warn("No Student record found for userId={} — using default major 'General'", userId);
+            return "General";
+        }
 
         String major = student.getMajor();
         if (major == null || major.isBlank()) {
