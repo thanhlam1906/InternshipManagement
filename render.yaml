@@ -23,6 +23,13 @@ services:
       # --- JWT secret — Render tu sinh ra ---
       - key: JWT_SECRET
         generateValue: true
+      # --- Admin account (tự động tạo khi deploy lần đầu) ---
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@internship.local
       # --- OAuth2 redirect (update lại khi deploy xong) ---
       - key: OAUTH2_REDIRECT_URI
         value: http://localhost:5173/oauth2/callback
