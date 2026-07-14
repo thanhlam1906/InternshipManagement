@@ -1,6 +1,7 @@
 package com.example.internshipmanagement.controller;
 
 import com.example.internshipmanagement.dto.request.auth.LoginRequest;
+import com.example.internshipmanagement.dto.request.auth.RegisterRequest;
 import com.example.internshipmanagement.dto.request.auth.ChangePasswordRequest;
 import com.example.internshipmanagement.dto.response.common.ApiDataResponse;
 import com.example.internshipmanagement.dto.response.auth.LoginResponse;
@@ -34,6 +35,20 @@ public class AuthController {
                 .build();
 
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiDataResponse<LoginResponse>> register(@Valid @RequestBody RegisterRequest request) {
+        LoginResponse loginResponse = authService.register(request);
+
+        ApiDataResponse<LoginResponse> apiResponse = ApiDataResponse.<LoginResponse>builder()
+                .success(true)
+                .message("Dang ky thanh cong")
+                .data(loginResponse)
+                .httpStatus(HttpStatus.CREATED)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
     @GetMapping("/me")

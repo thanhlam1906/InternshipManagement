@@ -1,6 +1,7 @@
 package com.example.internshipmanagement.repository;
 
 import com.example.internshipmanagement.entity.User;
+import com.example.internshipmanagement.entity.enums.AuthProvider;
 import com.example.internshipmanagement.entity.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,4 +24,6 @@ public interface IUserRepository extends JpaRepository<User, Integer> {
 
     boolean existsByEmailAndUserIdNot(String email, Integer userId);
     Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+    Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId);
 }

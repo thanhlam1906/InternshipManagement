@@ -4,6 +4,8 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import AppLayout from '@/layouts/AppLayout'
 import StudentLayout from '@/layouts/StudentLayout'
 import LoginPage from '@/pages/auth/LoginPage'
+import RegisterPage from '@/pages/auth/RegisterPage'
+import OAuth2Callback from '@/pages/auth/OAuth2Callback'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import StudentDashboardPage from '@/pages/student/StudentDashboardPage'
 import StudentProfilePage from '@/pages/student/StudentProfilePage'
@@ -43,8 +45,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Route */}
+          {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/oauth2/callback" element={<OAuth2Callback />} />
 
           {/* All Protected Routes — layout chosen by role */}
           <Route

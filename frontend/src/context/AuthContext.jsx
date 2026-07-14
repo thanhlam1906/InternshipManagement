@@ -79,6 +79,15 @@ export function AuthProvider({ children }) {
     return userData;
   }, []);
 
+  const register = useCallback(async (data) => {
+    const res = await authApi.register(data);
+    const { token, userId, username: uname, fullName, role } = res.data.data;
+    sessionStorage.setItem(TOKEN_KEY, token);
+    const userData = { userId, username: uname, fullName, role };
+    setUser(userData);
+    return userData;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -90,7 +99,7 @@ export function AuthProvider({ children }) {
     }
   }, [clearSession]);
 
-  const value = { user, loading, login, logout };
+  const value = { user, loading, login, register, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -2,10 +2,13 @@ package com.example.internshipmanagement.service.impl;
 
 import com.example.internshipmanagement.config.TokenBlacklist;
 import com.example.internshipmanagement.dto.request.auth.LoginRequest;
+import com.example.internshipmanagement.dto.request.auth.RegisterRequest;
 import com.example.internshipmanagement.dto.request.auth.ChangePasswordRequest;
 import com.example.internshipmanagement.dto.response.auth.LoginResponse;
 import com.example.internshipmanagement.dto.response.user.UserResponse;
 import com.example.internshipmanagement.entity.User;
+import com.example.internshipmanagement.entity.enums.AuthProvider;
+import com.example.internshipmanagement.entity.enums.Role;
 import com.example.internshipmanagement.repository.IUserRepository;
 import com.example.internshipmanagement.service.AuthService;
 import com.example.internshipmanagement.ulti.JwtUtil;
@@ -21,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 
 import java.time.Instant;
@@ -66,6 +70,45 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse register(RegisterRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new ResourceConflictException("Ten dang nhap da ton tai");
+        }
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ResourceConflictException("Email da ton tai");
+        }
+
+        User user = User.builder()
+                .username(request.getUsername())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
+                .role(Role.STUDENT)
+                .provider(AuthProvider.LOCAL)
+                .emailVerified(false)
+                .isActive(true)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        log.info("Student registered: id={}, username={}, email={}", savedUser.getUserId(), savedUser.getUsername(), savedUser.getEmail());
+
+        String token = jwtUtil.generateToken(savedUser.getUsername(), savedUser.getRole().name());
+
+        return LoginResponse.builder()
+                .token(token)
+                .tokenType("Bearer")
+                .userId(savedUser.getUserId())
+                .username(savedUser.getUsername())
+                .fullName(savedUser.getFullName())
+                .role(savedUser.getRole())
                 .build();
     }
 

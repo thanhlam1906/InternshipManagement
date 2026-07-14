@@ -1,5 +1,6 @@
 package com.example.internshipmanagement.entity;
 
+import com.example.internshipmanagement.entity.enums.AuthProvider;
 import com.example.internshipmanagement.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,7 +27,7 @@ public class User {
     @Column(name = "username", unique = true, nullable = false, length = 50)
     private String username;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Column(name = "full_name", nullable = false, length = 100)
@@ -37,6 +38,21 @@ public class User {
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "provider", nullable = false, length = 20)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(name = "provider_id", length = 255)
+    private String providerId;
+
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
