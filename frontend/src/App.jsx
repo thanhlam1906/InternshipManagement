@@ -74,7 +74,7 @@ function App() {
             <Route element={<ProtectedRoute roles={['ADMIN']} />}>
               <Route path="users" element={<UserListPage />} />
               <Route path="mentors" element={<MentorListPage />} />
-              <Route path="phases" element={<PhaseManagementPage />} />
+              <Route path="phase-management" element={<PhaseManagementPage />} />
               <Route path="round-criteria" element={<RoundCriterionListPage />} />
               <Route path="evaluation-criteria" element={<CriterionListPage />} />
             </Route>

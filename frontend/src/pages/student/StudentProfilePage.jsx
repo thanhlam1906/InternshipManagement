@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { studentApi, userApi } from '@/services/api'
+import { studentApi } from '@/services/api'
 import FormDialog from '@/components/FormDialog'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { User, GraduationCap, Mail, Phone, MapPin, Calendar, Edit, Hash, BookOpen } from 'lucide-react'
@@ -9,7 +9,6 @@ import toast from 'react-hot-toast'
 export default function StudentProfilePage() {
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
-  const [userDetails, setUserDetails] = useState(null)
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
@@ -19,15 +18,10 @@ export default function StudentProfilePage() {
   const fetchProfile = useCallback(async () => {
     setLoading(true)
     try {
-      const [studentRes, userRes] = await Promise.allSettled([
-        studentApi.getAll({ signal: abortRef.current?.signal }).then(r => {
-          const all = r.data.data.items || []
-          return all.find(s => s.userId === user.userId) || null
-        }),
-        userApi.getById(user.userId, { signal: abortRef.current?.signal }),
+      const [studentRes] = await Promise.allSettled([
+        studentApi.getById(user.userId, { signal: abortRef.current?.signal }).then(r => r.data.data || null).catch(() => null),
       ])
       if (studentRes.status === 'fulfilled') setProfile(studentRes.value)
-      if (userRes.status === 'fulfilled') setUserDetails(userRes.value?.data?.data || userRes.value?.data || null)
     } catch (err) {
       if (err.name !== 'AbortError') toast.error('Không thể tải thông tin hồ sơ')
     } finally {
@@ -122,7 +116,7 @@ export default function StudentProfilePage() {
               <Mail className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Email</p>
-                <p className="text-sm font-medium mt-0.5">{userDetails?.email || '--'}</p>
+                <p className="text-sm font-medium mt-0.5">{user?.email || '--'}</p>
               </div>
             </div>
 
@@ -130,7 +124,7 @@ export default function StudentProfilePage() {
               <Phone className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Số điện thoại</p>
-                <p className="text-sm font-medium mt-0.5">{userDetails?.phoneNumber || '--'}</p>
+                <p className="text-sm font-medium mt-0.5">{user?.phoneNumber || '--'}</p>
               </div>
             </div>
 
@@ -195,13 +189,13 @@ export default function StudentProfilePage() {
           <div className="bg-white rounded-xl border border-border p-6">
             <h3 className="font-bold mb-3">Trạng thái tài khoản</h3>
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${userDetails?.isActive !== false ? 'bg-emerald-500' : 'bg-red-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${user?.isActive !== false ? 'bg-emerald-500' : 'bg-red-500'}`} />
               <span className="text-sm font-medium">
-                {userDetails?.isActive !== false ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
+                {user?.isActive !== false ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Tham gia từ: {userDetails?.createdAt
+              Tham gia từ: {user?.createdAt
                 ? new Date(userDetails.createdAt).toLocaleDateString('vi-VN')
                 : '--'}
             </p>

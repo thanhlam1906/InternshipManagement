@@ -67,8 +67,9 @@ public class RateLimiter {
     }
 
     private void checkLimit(Integer userId, String category, int maxRequests, long windowMs) {
-        if ("dev".equals(activeProfile)) {
-            log.info("Bypassing rate limit check in dev profile for userId={}, category={}", userId, category);
+        // Only enforce rate limits in production
+        if (activeProfile == null || !activeProfile.contains("prod")) {
+            log.debug("Rate limit bypassed — non-production profile: userId={}, category={}", userId, category);
             return;
         }
 

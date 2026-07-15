@@ -43,10 +43,7 @@ export default function StudentDashboardPage() {
       setLoading(true)
       try {
         const [profileRes, assignRes, resultRes, phaseRes] = await Promise.allSettled([
-          studentApi.getAll().then(r => {
-            const all = r.data.data.items || []
-            return all.find(s => s.userId === user.userId) || null
-          }),
+          studentApi.getById(user.userId).then(r => r.data.data || null).catch(() => null),
           assignmentApi.getAll({ studentId: user.userId, page: 0, size: 10 }),
           resultApi.getAll({ studentId: user.userId, page: 0, size: 5 }),
           phaseApi.getAll({ page: 0, size: 20 }),

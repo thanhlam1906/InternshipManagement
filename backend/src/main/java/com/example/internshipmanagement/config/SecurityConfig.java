@@ -102,7 +102,8 @@ public class SecurityConfig {
             )
             .headers(headers -> headers
                 .xssProtection(HeadersConfigurer.XXssConfig::disable) // deprecated; use CSP instead
-                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"))
             )
             .addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

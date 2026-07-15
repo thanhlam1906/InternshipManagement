@@ -203,10 +203,10 @@ public class GlobalExceptionHandler {
         ApiDataResponse<String> response = ApiDataResponse.<String>builder()
                 .success(false)
                 .message(ex.getMessage())
-                .httpStatus(HttpStatus.BAD_GATEWAY)
+                .httpStatus(HttpStatus.SERVICE_UNAVAILABLE)
                 .build();
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_GATEWAY);
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(RateLimitExceededException.class)

@@ -12,7 +12,7 @@ const adminNav = [
   { to: '/users', icon: Users, label: 'Quản lý Users' },
   { to: '/students', icon: GraduationCap, label: 'Sinh viên' },
   { to: '/mentors', icon: UserCheck, label: 'Giảng viên' },
-  { to: '/phases', icon: Calendar, label: 'Đợt thực tập & Đánh giá' },
+  { to: '/phase-management', icon: Calendar, label: 'Đợt thực tập & Đánh giá' },
   { to: '/assignments', icon: ClipboardList, label: 'Phân công' },
   { to: '/assessment-rounds', icon: Award, label: 'Đợt đánh giá' },
   { to: '/evaluation-criteria', icon: ListChecks, label: 'Tiêu chí' },
