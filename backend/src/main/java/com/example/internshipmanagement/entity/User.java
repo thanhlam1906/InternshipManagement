@@ -55,8 +55,9 @@ public class User {
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(name = "role", nullable = false)
-    private Role role;
+    private Role role = Role.STUDENT;
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)

@@ -94,9 +94,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiDataResponse<String>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation: {}", ex.getMessage());
 
+        String message = ErrorMessages.UNEXPECTED_ERROR;
+        if (ex.getMessage() != null && ex.getMessage().contains("violates not-null constraint")) {
+            message = "Du lieu gui len thieu truong bat buoc, vui long kiem tra lai";
+        }
+
         ApiDataResponse<String> response = ApiDataResponse.<String>builder()
                 .success(false)
-                .message(ErrorMessages.REFERENCED_DATA_DELETE)
+                .message(message)
                 .httpStatus(HttpStatus.CONFLICT)
                 .build();
 
