@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { userApi, studentApi, mentorApi, assignmentApi } from '@/services/api'
+import { dashboardApi } from '@/services/api'
 import { Users, GraduationCap, UserCheck, ClipboardList, TrendingUp, Activity } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
@@ -24,49 +24,22 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchStats = async () => {
       setLoading(true)
       setError(null)
       try {
-        // Fetch counts in parallel with minimal page sizes
-        const [usersRes, studentsRes, mentorsRes, assignmentsRes] = await Promise.allSettled([
-          userApi.getAll({ page: 0, size: 1 }),
-          studentApi.getAll(),
-          mentorApi.getAll(),
-          assignmentApi.getAll({ page: 0, size: 1 }),
-        ])
+        const res = await dashboardApi.getStats()
+        const data = res?.data?.data
 
-        const counts = {}
-        if (usersRes.status === 'fulfilled') {
-          counts.users = usersRes.value?.data?.data?.totalElements
-            ?? usersRes.value?.data?.totalElements
-            ?? usersRes.value?.data?.data?.length
-            ?? usersRes.value?.data?.length
-            ?? '-'
+        if (mountedRef.current) {
+          setStats({
+            users: data?.totalUsers ?? '-',
+            students: data?.totalStudents ?? '-',
+            mentors: data?.totalMentors ?? '-',
+            assignments: data?.totalAssignments ?? '-',
+            assignmentsByStatus: data?.assignmentsByStatus ?? {},
+          })
         }
-        if (studentsRes.status === 'fulfilled') {
-          counts.students = studentsRes.value?.data?.data?.totalElements
-            ?? studentsRes.value?.data?.totalElements
-            ?? studentsRes.value?.data?.data?.length
-            ?? studentsRes.value?.data?.length
-            ?? '-'
-        }
-        if (mentorsRes.status === 'fulfilled') {
-          counts.mentors = mentorsRes.value?.data?.data?.totalElements
-            ?? mentorsRes.value?.data?.totalElements
-            ?? mentorsRes.value?.data?.data?.length
-            ?? mentorsRes.value?.data?.length
-            ?? '-'
-        }
-        if (assignmentsRes.status === 'fulfilled') {
-          counts.assignments = assignmentsRes.value?.data?.data?.totalElements
-            ?? assignmentsRes.value?.data?.totalElements
-            ?? assignmentsRes.value?.data?.data?.length
-            ?? assignmentsRes.value?.data?.length
-            ?? '-'
-        }
-
-        if (mountedRef.current) setStats(counts)
       } catch (err) {
         if (mountedRef.current) setError('Không thể tải dữ liệu thống kê.')
       } finally {
@@ -74,7 +47,7 @@ export default function DashboardPage() {
       }
     }
 
-    fetchCounts()
+    fetchStats()
   }, [])
 
   const visibleCards = statCards.filter(c => c.roles.includes(user?.role))

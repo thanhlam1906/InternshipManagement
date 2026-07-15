@@ -112,3 +112,7 @@ export const jobSearchApi = {
   search: (params, config) => axiosClient.get('/jobs/search', { params, ...config }),
   searchByMajor: (params, config) => axiosClient.get('/jobs/search/by-major', { params, ...config }),
 }
+
+export const dashboardApi = {
+  getStats: () => axiosClient.get('/dashboard'),
+}
