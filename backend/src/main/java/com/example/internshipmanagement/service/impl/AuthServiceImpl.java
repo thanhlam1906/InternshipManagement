@@ -6,9 +6,11 @@ import com.example.internshipmanagement.dto.request.auth.RegisterRequest;
 import com.example.internshipmanagement.dto.request.auth.ChangePasswordRequest;
 import com.example.internshipmanagement.dto.response.auth.LoginResponse;
 import com.example.internshipmanagement.dto.response.user.UserResponse;
+import com.example.internshipmanagement.entity.Student;
 import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.AuthProvider;
 import com.example.internshipmanagement.entity.enums.Role;
+import com.example.internshipmanagement.repository.IStudentRepository;
 import com.example.internshipmanagement.repository.IUserRepository;
 import com.example.internshipmanagement.service.AuthService;
 import com.example.internshipmanagement.ulti.JwtUtil;
@@ -36,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final IUserRepository userRepository;
+    private final IStudentRepository studentRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final HttpServletRequest request;
@@ -76,11 +79,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public LoginResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ResourceConflictException("Ten dang nhap da ton tai");
-        }
-
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByUsernameOrEmail(request.getUsername(), request.getEmail())) {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new ResourceConflictException("Ten dang nhap da ton tai");
+            }
             throw new ResourceConflictException("Email da ton tai");
         }
 
@@ -97,6 +99,16 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+
+        // Auto-create Student record for newly registered students
+        if (savedUser.getRole() == Role.STUDENT) {
+            Student student = Student.builder()
+                    .user(savedUser)
+                    .studentCode("SV" + savedUser.getUserId())
+                    .build();
+            studentRepository.save(student);
+            log.info("Auto-created Student record for userId={}, studentCode={}", savedUser.getUserId(), student.getStudentCode());
+        }
 
         log.info("Student registered: id={}, username={}, email={}", savedUser.getUserId(), savedUser.getUsername(), savedUser.getEmail());
 

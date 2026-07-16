@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { studentApi } from '@/services/api'
 import FormDialog from '@/components/FormDialog'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { ProfileSkeleton } from '@/components/Skeleton'
 import { User, GraduationCap, Mail, Phone, MapPin, Calendar, Edit, Hash, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -17,25 +17,25 @@ export default function StudentProfilePage() {
 
   const fetchProfile = useCallback(async () => {
     setLoading(true)
+    const controller = new AbortController()
+    abortRef.current = controller
     try {
-      const [studentRes] = await Promise.allSettled([
-        studentApi.getById(user.userId, { signal: abortRef.current?.signal }).then(r => r.data.data || null).catch(() => null),
-      ])
-      if (studentRes.status === 'fulfilled') setProfile(studentRes.value)
+      const res = await studentApi.getById(user.userId, { signal: controller.signal })
+      setProfile(res.data.data || null)
     } catch (err) {
-      if (err.name !== 'AbortError') toast.error('Không thể tải thông tin hồ sơ')
+      if (err.name === 'AbortError' || err.code === 'ERR_CANCELED') return
+      toast.error('Không thể tải thông tin hồ sơ')
     } finally {
       setLoading(false)
     }
   }, [user.userId])
 
   useEffect(() => {
-    abortRef.current = new AbortController()
     fetchProfile()
     return () => { abortRef.current?.abort() }
   }, [fetchProfile])
 
-  const openEdit = () => {
+  const openEdit = useCallback(() => {
     setForm({
       studentCode: profile?.studentCode || '',
       major: profile?.major || '',
@@ -44,9 +44,9 @@ export default function StudentProfilePage() {
       address: profile?.address || '',
     })
     setFormOpen(true)
-  }
+  }, [profile])
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     setFormLoading(true)
     try {
@@ -58,24 +58,34 @@ export default function StudentProfilePage() {
         dateOfBirth: form.dateOfBirth || null,
         address: form.address,
       })
+      const updatedProfile = {
+        ...profile,
+        studentCode: form.studentCode,
+        major: form.major,
+        clazz: form.clazz,
+        dateOfBirth: form.dateOfBirth || null,
+        address: form.address,
+      }
+      setProfile(updatedProfile)
       toast.success('Cập nhật hồ sơ thành công!')
       setFormOpen(false)
-      fetchProfile()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra')
     } finally {
       setFormLoading(false)
     }
-  }
+  }, [form, profile, profile?.id, user.userId])
 
-  if (loading) return <LoadingSpinner text="Đang tải hồ sơ..." />
+  const initials = useMemo(() => {
+    return user?.fullName
+      ?.split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U'
+  }, [user?.fullName])
 
-  const initials = user?.fullName
-    ?.split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() || 'U'
+  if (loading) return <ProfileSkeleton />
 
   return (
     <div className="space-y-6">
@@ -196,7 +206,7 @@ export default function StudentProfilePage() {
             </div>
             <p className="text-xs text-muted-foreground mt-3">
               Tham gia từ: {user?.createdAt
-                ? new Date(userDetails.createdAt).toLocaleDateString('vi-VN')
+                ? new Date(user.createdAt).toLocaleDateString('vi-VN')
                 : '--'}
             </p>
           </div>
@@ -219,7 +229,7 @@ export default function StudentProfilePage() {
             onChange={e => setForm({ ...form, studentCode: e.target.value })}
             className="w-full px-3 py-2 rounded-lg border border-input text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             required
-            maxLength={50}
+            maxLength={20}
           />
         </div>
         <div>

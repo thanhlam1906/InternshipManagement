@@ -41,14 +41,14 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "provider", nullable = false, length = 20)
+    @Column(name = "provider", length = 20)
     private AuthProvider provider = AuthProvider.LOCAL;
 
     @Column(name = "provider_id", length = 255)
     private String providerId;
 
     @Builder.Default
-    @Column(name = "email_verified", nullable = false)
+    @Column(name = "email_verified")
     private Boolean emailVerified = false;
 
     @Column(name = "avatar_url", length = 512)

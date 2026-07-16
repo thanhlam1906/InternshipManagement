@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { jobSearchApi } from '@/services/api'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { JobListSkeleton } from '@/components/Skeleton'
 import { Search, MapPin, Briefcase, DollarSign, Calendar, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -151,7 +151,7 @@ export default function JobSearchPage() {
       </form>
 
       {/* Jobs List */}
-      {loading ? <LoadingSpinner text="Đang tìm kiếm cơ hội thực tập..." /> : (
+      {loading ? <JobListSkeleton /> : (
         <div className="space-y-4">
           {jobs.length === 0 ? (
             <div className="bg-white rounded-xl border border-border p-12 text-center text-muted-foreground">

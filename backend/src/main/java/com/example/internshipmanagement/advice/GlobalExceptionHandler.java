@@ -95,8 +95,12 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity violation: {}", ex.getMessage());
 
         String message = ErrorMessages.UNEXPECTED_ERROR;
-        if (ex.getMessage() != null && ex.getMessage().contains("violates not-null constraint")) {
+        String msg = ex.getMessage() != null ? ex.getMessage() : "";
+
+        if (msg.contains("violates not-null constraint")) {
             message = "Du lieu gui len thieu truong bat buoc, vui long kiem tra lai";
+        } else if (msg.contains("violates unique constraint") || msg.contains("violates unique index")) {
+            message = "Du lieu da ton tai (trung lap), vui long kiem tra lai";
         }
 
         ApiDataResponse<String> response = ApiDataResponse.<String>builder()

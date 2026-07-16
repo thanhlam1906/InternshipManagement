@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { studentApi, assignmentApi, resultApi, phaseApi } from '@/services/api'
+import { studentApi, assignmentApi, resultApi, phaseApi, roundApi } from '@/services/api'
 import {
   FileText, Briefcase, Clock, Target, Award, TrendingUp,
   ArrowRight, CheckCircle2, AlertCircle, Circle, Sparkles, GraduationCap
@@ -31,6 +31,7 @@ export default function StudentDashboardPage() {
   const [assignments, setAssignments] = useState([])
   const [results, setResults] = useState([])
   const [phases, setPhases] = useState([])
+  const [rounds, setRounds] = useState([])
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -42,11 +43,12 @@ export default function StudentDashboardPage() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [profileRes, assignRes, resultRes, phaseRes] = await Promise.allSettled([
+        const [profileRes, assignRes, resultRes, phaseRes, roundRes] = await Promise.allSettled([
           studentApi.getById(user.userId).then(r => r.data.data || null).catch(() => null),
           assignmentApi.getAll({ studentId: user.userId, page: 0, size: 10 }),
-          resultApi.getAll({ studentId: user.userId, page: 0, size: 5 }),
+          resultApi.getAll({ studentId: user.userId, page: 0, size: 200 }),
           phaseApi.getAll({ page: 0, size: 20 }),
+          roundApi.getAll({ page: 0, size: 100 }),
         ])
 
         if (mountedRef.current) {
@@ -54,6 +56,7 @@ export default function StudentDashboardPage() {
           if (assignRes.status === 'fulfilled') setAssignments(assignRes.value?.data?.data?.items || [])
           if (resultRes.status === 'fulfilled') setResults(resultRes.value?.data?.data?.items || [])
           if (phaseRes.status === 'fulfilled') setPhases(phaseRes.value?.data?.data?.items || [])
+          if (roundRes.status === 'fulfilled') setRounds(roundRes.value?.data?.data?.items || [])
         }
       } catch (err) {
         console.error('Dashboard fetch error:', err)
@@ -79,10 +82,34 @@ export default function StudentDashboardPage() {
     ? phases.find(p => p.id === activeAssignment.phaseId)
     : null
 
-  // Phase timeline info
+  // Phase timeline info — only show phases the student is assigned to
+  const assignedPhaseIds = new Set(assignments.map(a => a.phaseId))
+  const assignedPhases = phases.filter(p => assignedPhaseIds.has(p.id))
   const now = new Date()
-  const sortedPhases = [...phases].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+  const sortedPhases = [...assignedPhases].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
   const currentPhaseIdx = activePhase ? sortedPhases.findIndex(p => p.id === activePhase.id) : -1
+
+  // Group rounds by phase
+  const roundsByPhase = {}
+  assignedPhaseIds.forEach(pid => {
+    roundsByPhase[pid] = rounds.filter(r => r.phaseId === pid).sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+  })
+
+  // Lookup maps for cross-referencing
+  const roundIdToPhaseId = {}
+  rounds.forEach(r => { roundIdToPhaseId[r.id] = r.phaseId })
+  const phaseIdToName = {}
+  phases.forEach(p => { phaseIdToName[p.id] = p.phaseName })
+
+  // Group results by phase → round
+  const resultsByPhaseRound = {}
+  results.forEach(r => {
+    const pid = roundIdToPhaseId[r.roundId]
+    if (!pid) return
+    if (!resultsByPhaseRound[pid]) resultsByPhaseRound[pid] = {}
+    if (!resultsByPhaseRound[pid][r.roundId]) resultsByPhaseRound[pid][r.roundId] = []
+    resultsByPhaseRound[pid][r.roundId].push(r)
+  })
 
   return (
     <div className="space-y-6">
@@ -161,9 +188,9 @@ export default function StudentDashboardPage() {
       </div>
 
       {/* ===== PROGRESS & RESULTS ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Internship Timeline */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-border p-6">
+        <div className="lg:col-span-3 bg-white rounded-xl border border-border p-6">
           <div className="flex items-center gap-2 mb-5">
             <Clock className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold">Tiến độ thực tập</h2>
@@ -184,37 +211,77 @@ export default function StudentDashboardPage() {
                   const isCurrent = currentPhaseIdx === idx
                   const isPast = idx < currentPhaseIdx
                   const isFuture = idx > currentPhaseIdx
+                  const phaseRounds = roundsByPhase[phase.id] || []
 
                   return (
-                    <div key={phase.id} className="relative flex gap-4 pl-1">
-                      {/* Node */}
-                      <div className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
-                        isCurrent
-                          ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 animate-pulse'
-                          : isPast
-                            ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
-                            : 'bg-gray-100 border-gray-300 text-gray-400'
-                      }`}>
-                        {isPast ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-bold">{idx + 1}</span>}
+                    <div key={phase.id}>
+                      <div className="relative flex gap-4 pl-1">
+                        {/* Node */}
+                        <div className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
+                          isCurrent
+                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 animate-pulse'
+                            : isPast
+                              ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
+                              : 'bg-gray-100 border-gray-300 text-gray-400'
+                        }`}>
+                          {isPast ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-xs font-bold">{idx + 1}</span>}
+                        </div>
+
+                        {/* Content */}
+                        <div className={`flex-1 pb-1 ${isFuture ? 'opacity-50' : ''}`}>
+                          <h3 className={`text-sm font-bold ${isCurrent ? 'text-primary' : 'text-foreground'}`}>
+                            {phase.phaseName}
+                            {isCurrent && (
+                              <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                                Hiện tại
+                              </span>
+                            )}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {new Date(phase.startDate).toLocaleDateString('vi-VN')} — {new Date(phase.endDate).toLocaleDateString('vi-VN')}
+                          </p>
+                          {phase.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{phase.description}</p>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Content */}
-                      <div className={`flex-1 pb-1 ${isFuture ? 'opacity-50' : ''}`}>
-                        <h3 className={`text-sm font-bold ${isCurrent ? 'text-primary' : 'text-foreground'}`}>
-                          {phase.phaseName}
-                          {isCurrent && (
-                            <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                              Hiện tại
-                            </span>
-                          )}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {new Date(phase.startDate).toLocaleDateString('vi-VN')} — {new Date(phase.endDate).toLocaleDateString('vi-VN')}
-                        </p>
-                        {phase.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{phase.description}</p>
-                        )}
-                      </div>
+                      {/* Rounds under this phase */}
+                      {phaseRounds.length > 0 && (
+                        <div className="ml-[52px] mt-1 mb-2 space-y-2">
+                          {phaseRounds.map((round, rIdx) => {
+                            const roundStart = new Date(round.startDate)
+                            const roundEnd = new Date(round.endDate)
+                            const isRoundPast = roundEnd < now
+                            const isRoundCurrent = now >= roundStart && now <= roundEnd
+                            const isRoundFuture = roundStart > now
+                            return (
+                              <div key={round.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-secondary/40 border border-border/50 hover:bg-secondary/60 transition-colors">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                                  isRoundPast ? 'bg-emerald-100 text-emerald-600' :
+                                  isRoundCurrent ? 'bg-primary/10 text-primary' :
+                                  'bg-gray-100 text-gray-400'
+                                }`}>
+                                  {isRoundPast ? <CheckCircle2 className="w-3.5 h-3.5" /> :
+                                   isRoundCurrent ? <Clock className="w-3.5 h-3.5" /> :
+                                   <Circle className="w-3.5 h-3.5" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold">{round.roundName}</p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    {roundStart.toLocaleDateString('vi-VN')} — {roundEnd.toLocaleDateString('vi-VN')}
+                                  </p>
+                                </div>
+                                {isRoundCurrent && (
+                                  <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase shrink-0">
+                                    Hiện tại
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -224,10 +291,10 @@ export default function StudentDashboardPage() {
         </div>
 
         {/* Assessment Summary */}
-        <div className="bg-white rounded-xl border border-border p-6">
+        <div className="lg:col-span-2 bg-white rounded-xl border border-border p-6">
           <div className="flex items-center gap-2 mb-5">
             <Award className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-bold">Kết quả gần đây</h2>
+            <h2 className="text-lg font-bold">Kết quả đánh giá</h2>
           </div>
 
           {results.length === 0 ? (
@@ -236,29 +303,70 @@ export default function StudentDashboardPage() {
               Chưa có kết quả đánh giá
             </div>
           ) : (
-            <div className="space-y-3">
-              {results.slice(0, 5).map((r) => {
-                const badge = scoreBadge(r.score)
-                const BadgeIcon = badge?.icon
+            <div className="space-y-4">
+              {Object.keys(resultsByPhaseRound).map(pid => {
+                const phaseName = phaseIdToName[parseInt(pid)] || 'Không xác định'
+                const roundsData = resultsByPhaseRound[pid]
                 return (
-                  <div key={r.id} className="flex items-start gap-3 p-3 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-colors">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${badge?.color || 'text-gray-500 bg-gray-100'}`}>
-                      {BadgeIcon && <BadgeIcon className="w-4 h-4" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{r.criterionName || 'Tiêu chí'}</p>
-                      <p className="text-xs text-muted-foreground">{r.roundName}</p>
-                      {r.comments && (
-                        <p className="text-xs text-muted-foreground/80 mt-0.5 line-clamp-1">{r.comments}</p>
-                      )}
-                    </div>
-                    <span className={`text-lg font-bold ${badge?.color?.split(' ')[0] || 'text-gray-500'}`}>
-                      {r.score != null ? Number(r.score).toFixed(1) : '--'}
-                    </span>
+                  <div key={pid}>
+                    <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 text-primary" />
+                      {phaseName}
+                    </h3>
+                    {Object.keys(roundsData).map(rid => {
+                      const roundResults = roundsData[rid]
+                      const roundName = roundResults[0]?.roundName || 'Vòng đánh giá'
+                      const avgScore = roundResults.length > 0
+                        ? (roundResults.reduce((s, r) => s + Number(r.score), 0) / roundResults.length).toFixed(1)
+                        : null
+                      const bestScore = roundResults.length > 0
+                        ? Math.max(...roundResults.map(r => Number(r.score))).toFixed(1)
+                        : null
+                      return (
+                        <div key={rid} className="mb-3 p-3 rounded-xl bg-secondary/30 border border-border/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              {roundName}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs">
+                              {avgScore && (
+                                <span className="text-muted-foreground">
+                                  TB: <span className="font-bold text-foreground">{avgScore}</span>
+                                </span>
+                              )}
+                              {bestScore && (
+                                <span className="text-muted-foreground">
+                                  Cao nhất: <span className="font-bold text-accent">{bestScore}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            {roundResults.map(r => {
+                              const badge = scoreBadge(r.score)
+                              const BadgeIcon = badge?.icon
+                              return (
+                                <div key={r.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-secondary/60 transition-colors">
+                                  <div className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${badge?.color || 'text-gray-500 bg-gray-100'}`}>
+                                    {BadgeIcon ? <BadgeIcon className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                                  </div>
+                                  <span className="text-xs flex-1 truncate">{r.criterionName}</span>
+                                  {r.comments && (
+                                    <span className="text-[10px] text-muted-foreground truncate hidden sm:inline max-w-[120px]">{r.comments}</span>
+                                  )}
+                                  <span className={`text-xs font-bold shrink-0 ${badge?.color?.split(' ')[0] || 'text-gray-500'}`}>
+                                    {Number(r.score).toFixed(1)}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )
               })}
-
               <button
                 onClick={() => navigate('/results')}
                 className="w-full flex items-center justify-center gap-1 py-2 text-sm text-primary font-medium hover:bg-primary/5 rounded-lg transition-colors"

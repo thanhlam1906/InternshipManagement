@@ -176,11 +176,9 @@ public class GeminiClient {
             return CVReviewResponse.builder()
                     .overallScore(reviewJson.path("overallScore").asInt(0))
                     .summary(reviewJson.path("summary").asText(""))
-                    .formatFeedback(reviewJson.path("formatFeedback").asText(""))
                     .contentFeedback(reviewJson.path("contentFeedback").asText(""))
                     .strengthPoints(reviewJson.path("strengthPoints").asText(""))
                     .improvementSuggestions(reviewJson.path("improvementSuggestions").asText(""))
-                    .majorRelevance(reviewJson.path("majorRelevance").asText(""))
                     .reviewedAt(LocalDateTime.now())
                     .build();
 

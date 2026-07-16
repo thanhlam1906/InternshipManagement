@@ -178,10 +178,6 @@ export default function CVReviewPage() {
                   <h3 className="text-xs font-bold uppercase tracking-wider text-primary">Tóm tắt CV</h3>
                   <p className="text-sm text-foreground/90 leading-relaxed">{result.summary}</p>
                 </div>
-                <div className="bg-secondary/40 p-4 rounded-xl space-y-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-accent">Phù hợp ngành học</h3>
-                  <p className="text-sm text-foreground/90 leading-relaxed">{result.majorRelevance}</p>
-                </div>
               </div>
 
               <div className="space-y-4">
@@ -201,11 +197,7 @@ export default function CVReviewPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-border pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="font-bold block text-muted-foreground mb-1 uppercase tracking-wider">Bố cục & Trình bày</span>
-                    <p className="text-foreground/80 leading-relaxed">{result.formatFeedback}</p>
-                  </div>
+                <div className="border-t border-border pt-4 text-xs">
                   <div>
                     <span className="font-bold block text-muted-foreground mb-1 uppercase tracking-wider">Nội dung & Kỹ năng</span>
                     <p className="text-foreground/80 leading-relaxed">{result.contentFeedback}</p>

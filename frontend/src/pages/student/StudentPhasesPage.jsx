@@ -29,7 +29,10 @@ export default function StudentPhasesPage() {
         allAssignments = assignRes.value?.data?.data?.items || assignRes.value?.data?.data || []
       }
 
-      setPhases(allPhases.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)))
+      // Only show phases the student is assigned to
+      const assignedPhaseIds = new Set(allAssignments.map(a => a.phaseId))
+      const assignedPhases = allPhases.filter(p => assignedPhaseIds.has(p.id))
+      setPhases(assignedPhases.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)))
       setAssignments(allAssignments)
     } catch (err) {
       if (err.name !== 'AbortError') console.error('Failed to load phases:', err)
@@ -46,7 +49,7 @@ export default function StudentPhasesPage() {
 
   if (loading) return <LoadingSpinner text="Đang tải danh sách đợt thực tập..." />
 
-  // Determine which phases the student is assigned to
+  // Determine which phases the student is assigned to (already filtered in fetchData)
   const assignedPhaseIds = new Set(assignments.map(a => a.phaseId))
 
   // Find current active phase

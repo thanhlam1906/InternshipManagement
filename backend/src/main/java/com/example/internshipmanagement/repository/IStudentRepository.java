@@ -9,8 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IStudentRepository extends JpaRepository<Student, Integer> {
+    @Override
+    @EntityGraph(attributePaths = {"user"})
+    Optional<Student> findById(Integer id);
+
     @EntityGraph(attributePaths = {"user"})
     @Query("SELECT DISTINCT s FROM Student s " +
            "JOIN InternshipAssignment a ON a.student = s " +

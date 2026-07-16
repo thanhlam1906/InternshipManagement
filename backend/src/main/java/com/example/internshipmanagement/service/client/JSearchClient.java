@@ -7,6 +7,7 @@ import com.example.internshipmanagement.exception.ExternalApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -62,6 +63,7 @@ public class JSearchClient {
      */
     private static final int MAX_QUERY_PARAM_LENGTH = 200;
 
+    @Cacheable(value = "jobSearch", key = "#keyword + '_' + #location + '_' + #page + '_' + #resultsPerPage")
     public JobSearchResultResponse searchJobs(String keyword, String location, int page, int resultsPerPage) {
         String apiKey = properties.getJsearch().getApiKey();
 

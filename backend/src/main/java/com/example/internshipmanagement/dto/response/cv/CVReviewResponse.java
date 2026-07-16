@@ -16,15 +16,11 @@ public class CVReviewResponse {
 
     private String summary;
 
-    private String formatFeedback;
-
     private String contentFeedback;
 
     private String strengthPoints;
 
     private String improvementSuggestions;
-
-    private String majorRelevance;
 
     @Builder.Default
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
