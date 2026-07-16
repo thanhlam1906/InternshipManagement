@@ -37,3 +37,10 @@ out/
 .vscode/
 /logs/
 .claude/mcp.json
+
+### Secrets & logs — KHÔNG commit ###
+.env
+*.env
+!*.env.example
+backend/logs/
+
