@@ -8,7 +8,7 @@ import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import com.example.internshipmanagement.mapper.EvaluationCriterionMapper;
-import com.example.internshipmanagement.repository.IEvaluationCriterionRepository;
+import com.example.internshipmanagement.repository.EvaluationCriterionRepository;
 import com.example.internshipmanagement.service.EvaluationCriterionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EvaluationCriterionServiceImpl implements EvaluationCriterionService {
 
-    private final IEvaluationCriterionRepository repository;
+    private final EvaluationCriterionRepository repository;
     private final EvaluationCriterionMapper mapper;
 
     @Override

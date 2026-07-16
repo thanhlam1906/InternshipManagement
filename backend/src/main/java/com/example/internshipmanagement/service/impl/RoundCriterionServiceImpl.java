@@ -11,7 +11,7 @@ import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.mapper.RoundCriterionMapper;
 import com.example.internshipmanagement.repository.AssessmentRoundRepository;
-import com.example.internshipmanagement.repository.IEvaluationCriterionRepository;
+import com.example.internshipmanagement.repository.EvaluationCriterionRepository;
 import com.example.internshipmanagement.repository.RoundCriterionRepository;
 import com.example.internshipmanagement.service.RoundCriterionService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class RoundCriterionServiceImpl implements RoundCriterionService {
 
     private final RoundCriterionRepository roundCriterionRepository;
     private final AssessmentRoundRepository assessmentRoundRepository;
-    private final IEvaluationCriterionRepository evaluationCriterionRepository;
+    private final EvaluationCriterionRepository evaluationCriterionRepository;
     private final RoundCriterionMapper roundCriterionMapper;
 
     @Override

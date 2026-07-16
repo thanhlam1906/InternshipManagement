@@ -7,7 +7,7 @@ import com.example.internshipmanagement.dto.request.user.UserRoleUpdateRequest;
 import com.example.internshipmanagement.dto.response.user.UserResponse;
 import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.mapper.UserMapper;
-import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.UserRepository;
 import com.example.internshipmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import org.springframework.data.domain.Pageable;
 @RequiredArgsConstructor
 public class UserImpl implements UserService {
 
-    private final IUserRepository userRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 

@@ -29,12 +29,12 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AssessmentResultServiceImpl implements AssessmentResultService {
 
-    private final IAssessmentResultRepository assessmentResultRepository;
-    private final IInternshipAssignmentRepository internshipAssignmentRepository;
+    private final AssessmentResultRepository assessmentResultRepository;
+    private final InternshipAssignmentRepository internshipAssignmentRepository;
     private final AssessmentRoundRepository assessmentRoundRepository;
-    private final IEvaluationCriterionRepository evaluationCriterionRepository;
+    private final EvaluationCriterionRepository evaluationCriterionRepository;
     private final RoundCriterionRepository roundCriterionRepository;
-    private final IUserRepository userRepository;
+    private final UserRepository userRepository;
     private final AssessmentResultMapper assessmentResultMapper;
 
     @Override

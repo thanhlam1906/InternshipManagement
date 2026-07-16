@@ -16,11 +16,11 @@ import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import com.example.internshipmanagement.mapper.InternshipAssignmentMapper;
-import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
-import com.example.internshipmanagement.repository.IInternshipPhaseRepository;
-import com.example.internshipmanagement.repository.IMentorRepository;
-import com.example.internshipmanagement.repository.IStudentRepository;
-import com.example.internshipmanagement.repository.IAssessmentResultRepository;
+import com.example.internshipmanagement.repository.InternshipAssignmentRepository;
+import com.example.internshipmanagement.repository.InternshipPhaseRepository;
+import com.example.internshipmanagement.repository.MentorRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
+import com.example.internshipmanagement.repository.AssessmentResultRepository;
 import com.example.internshipmanagement.service.InternshipAssignmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,11 +36,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 @RequiredArgsConstructor
 public class InternshipAssignmentServiceImpl implements InternshipAssignmentService {
 
-    private final IInternshipAssignmentRepository internshipAssignmentRepository;
-    private final IStudentRepository studentRepository;
-    private final IMentorRepository mentorRepository;
-    private final IInternshipPhaseRepository internshipPhaseRepository;
-    private final IAssessmentResultRepository assessmentResultRepository;
+    private final InternshipAssignmentRepository internshipAssignmentRepository;
+    private final StudentRepository studentRepository;
+    private final MentorRepository mentorRepository;
+    private final InternshipPhaseRepository internshipPhaseRepository;
+    private final AssessmentResultRepository assessmentResultRepository;
     private final InternshipAssignmentMapper internshipAssignmentMapper;
 
     @Override

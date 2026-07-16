@@ -1,7 +1,7 @@
 package com.example.internshipmanagement.config;
 
 import com.example.internshipmanagement.entity.User;
-import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.UserRepository;
 import com.example.internshipmanagement.ulti.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,7 +28,7 @@ import java.io.IOException;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
-    private final IUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Value("${app.oauth2.redirect-uri:http://localhost:5173/oauth2/callback}")
     private String frontendRedirectUri;

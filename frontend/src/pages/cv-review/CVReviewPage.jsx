@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { cvReviewApi } from '@/services/api'
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Cpu, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -9,14 +9,6 @@ export default function CVReviewPage() {
   const [provider, setProvider] = useState('GEMINI') // GEMINI or OPENAI
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      setLoading(false)
-      setResult(null)
-    }
-  }, [])
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0]

@@ -45,8 +45,8 @@ export default function StudentResultsPage() {
       setRounds(allRounds)
       setResults(allResults)
       setPhases(allPhases)
-    } catch (err) {
-      if (err.name !== 'AbortError') console.error('Failed to load results:', err)
+    } catch {
+      // Loi da duoc xu ly boi UI (Promise.allSettled + loading state)
     } finally {
       setLoading(false)
     }

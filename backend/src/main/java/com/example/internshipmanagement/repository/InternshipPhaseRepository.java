@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface IInternshipPhaseRepository extends JpaRepository<InternshipPhase, Integer> {
+public interface InternshipPhaseRepository extends JpaRepository<InternshipPhase, Integer> {
     @Override
     @EntityGraph(attributePaths = {})
     List<InternshipPhase> findAll();

@@ -1,10 +1,10 @@
 package com.example.internshipmanagement.service.impl;
 
 import com.example.internshipmanagement.dto.response.dashboard.DashboardResponse;
-import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
-import com.example.internshipmanagement.repository.IMentorRepository;
-import com.example.internshipmanagement.repository.IStudentRepository;
-import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.InternshipAssignmentRepository;
+import com.example.internshipmanagement.repository.MentorRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
+import com.example.internshipmanagement.repository.UserRepository;
 import com.example.internshipmanagement.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,10 +16,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DashboardServiceImpl implements DashboardService {
 
-    private final IUserRepository userRepository;
-    private final IStudentRepository studentRepository;
-    private final IMentorRepository mentorRepository;
-    private final IInternshipAssignmentRepository assignmentRepository;
+    private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final MentorRepository mentorRepository;
+    private final InternshipAssignmentRepository assignmentRepository;
 
     @Override
     public DashboardResponse getDashboardStats() {

@@ -58,8 +58,8 @@ export default function StudentDashboardPage() {
           if (phaseRes.status === 'fulfilled') setPhases(phaseRes.value?.data?.data?.items || [])
           if (roundRes.status === 'fulfilled') setRounds(roundRes.value?.data?.data?.items || [])
         }
-      } catch (err) {
-        console.error('Dashboard fetch error:', err)
+      } catch {
+        // Loi da duoc xu ly boi UI (Promise.allSettled + loading state)
       } finally {
         if (mountedRef.current) setLoading(false)
       }

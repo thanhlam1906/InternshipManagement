@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface IInternshipAssignmentRepository extends JpaRepository<InternshipAssignment, Integer> {
+public interface InternshipAssignmentRepository extends JpaRepository<InternshipAssignment, Integer> {
     @Override
     @EntityGraph(attributePaths = {"student", "student.user", "mentor", "mentor.user", "phase"})
     List<InternshipAssignment> findAll();

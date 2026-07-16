@@ -3,7 +3,7 @@ package com.example.internshipmanagement.config;
 import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.AuthProvider;
 import com.example.internshipmanagement.entity.enums.Role;
-import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final IUserRepository userRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.admin.username:admin}")

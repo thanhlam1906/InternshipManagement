@@ -10,10 +10,10 @@ import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.Role;
 import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.mapper.MentorMapper;
-import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
-import com.example.internshipmanagement.repository.IMentorRepository;
-import com.example.internshipmanagement.repository.IStudentRepository;
-import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.InternshipAssignmentRepository;
+import com.example.internshipmanagement.repository.MentorRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
+import com.example.internshipmanagement.repository.UserRepository;
 import com.example.internshipmanagement.service.MentorService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +35,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MentorServiceImpl implements MentorService {
 
-    private final IMentorRepository mentorRepository;
-    private final IStudentRepository studentRepository;
-    private final IUserRepository userRepository;
-    private final IInternshipAssignmentRepository internshipAssignmentRepository;
+    private final MentorRepository mentorRepository;
+    private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final InternshipAssignmentRepository internshipAssignmentRepository;
     private final MentorMapper mentorMapper;
 
     @Override

@@ -34,8 +34,8 @@ export default function StudentPhasesPage() {
       const assignedPhases = allPhases.filter(p => assignedPhaseIds.has(p.id))
       setPhases(assignedPhases.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)))
       setAssignments(allAssignments)
-    } catch (err) {
-      if (err.name !== 'AbortError') console.error('Failed to load phases:', err)
+    } catch {
+      // Loi da duoc xu ly boi UI (Promise.allSettled + loading state)
     } finally {
       setLoading(false)
     }

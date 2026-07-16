@@ -10,8 +10,8 @@ import com.example.internshipmanagement.entity.Student;
 import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.AuthProvider;
 import com.example.internshipmanagement.entity.enums.Role;
-import com.example.internshipmanagement.repository.IStudentRepository;
-import com.example.internshipmanagement.repository.IUserRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
+import com.example.internshipmanagement.repository.UserRepository;
 import com.example.internshipmanagement.service.AuthService;
 import com.example.internshipmanagement.ulti.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,11 +37,11 @@ import java.time.Instant;
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final IUserRepository userRepository;
-    private final IStudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
-    private final HttpServletRequest request;
+    private final HttpServletRequest httpServletRequest;
     private final TokenBlacklist tokenBlacklist;
 
     @Override
@@ -183,7 +183,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String extractTokenFromRequest() {
-        String authHeader = request.getHeader("Authorization");
+        String authHeader = httpServletRequest.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }

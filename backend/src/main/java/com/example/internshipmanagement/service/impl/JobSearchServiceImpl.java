@@ -5,7 +5,7 @@ import com.example.internshipmanagement.config.RateLimiter;
 import com.example.internshipmanagement.dto.request.job.JobSearchRequest;
 import com.example.internshipmanagement.dto.response.job.JobSearchResultResponse;
 import com.example.internshipmanagement.entity.Student;
-import com.example.internshipmanagement.repository.IStudentRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
 import com.example.internshipmanagement.service.JobSearchService;
 import com.example.internshipmanagement.service.client.JSearchClient;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 public class JobSearchServiceImpl implements JobSearchService {
 
     private final JSearchClient jSearchClient;
-    private final IStudentRepository studentRepository;
+    private final StudentRepository studentRepository;
     private final RateLimiter rateLimiter;
 
     @Override

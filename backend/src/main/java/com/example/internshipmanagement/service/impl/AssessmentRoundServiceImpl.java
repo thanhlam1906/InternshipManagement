@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.example.internshipmanagement.mapper.AssessmentRoundMapper;
 import com.example.internshipmanagement.repository.AssessmentRoundRepository;
-import com.example.internshipmanagement.repository.IEvaluationCriterionRepository;
-import com.example.internshipmanagement.repository.IInternshipPhaseRepository;
+import com.example.internshipmanagement.repository.EvaluationCriterionRepository;
+import com.example.internshipmanagement.repository.InternshipPhaseRepository;
 import com.example.internshipmanagement.repository.RoundCriterionRepository;
 import com.example.internshipmanagement.service.AssessmentRoundService;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +32,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AssessmentRoundServiceImpl implements AssessmentRoundService {
     private final AssessmentRoundRepository assessmentRoundRepository;
-    private final IInternshipPhaseRepository internshipPhaseRepository;
+    private final InternshipPhaseRepository internshipPhaseRepository;
     private final AssessmentRoundMapper assessmentRoundMapper;
-    private final IEvaluationCriterionRepository evaluationCriterionRepository;
+    private final EvaluationCriterionRepository evaluationCriterionRepository;
     private final RoundCriterionRepository roundCriterionRepository;
     @Override
     public Page<AssessmentRoundResponse> getAssessmentRounds(Integer phase_id, Pageable pageable) {

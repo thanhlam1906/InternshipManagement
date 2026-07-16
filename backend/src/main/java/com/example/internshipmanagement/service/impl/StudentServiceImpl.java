@@ -9,9 +9,9 @@ import com.example.internshipmanagement.entity.User;
 import com.example.internshipmanagement.entity.enums.Role;
 import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.mapper.StudentMapper;
-import com.example.internshipmanagement.repository.IStudentRepository;
-import com.example.internshipmanagement.repository.IUserRepository;
-import com.example.internshipmanagement.repository.IInternshipAssignmentRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
+import com.example.internshipmanagement.repository.UserRepository;
+import com.example.internshipmanagement.repository.InternshipAssignmentRepository;
 import com.example.internshipmanagement.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
-    private final IStudentRepository studentRepository;
-    private final IUserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
     private final StudentMapper studentMapper;
-    private final IInternshipAssignmentRepository internshipAssignmentRepository;
+    private final InternshipAssignmentRepository internshipAssignmentRepository;
 
     @Override
     @Transactional(readOnly = true)

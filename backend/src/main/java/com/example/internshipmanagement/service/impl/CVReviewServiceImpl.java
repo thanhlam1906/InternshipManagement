@@ -5,7 +5,7 @@ import com.example.internshipmanagement.config.RateLimiter;
 import com.example.internshipmanagement.dto.response.cv.CVReviewResponse;
 import com.example.internshipmanagement.entity.Student;
 
-import com.example.internshipmanagement.repository.IStudentRepository;
+import com.example.internshipmanagement.repository.StudentRepository;
 import com.example.internshipmanagement.service.CVReviewService;
 import com.example.internshipmanagement.service.PDFExtractorService;
 import com.example.internshipmanagement.service.client.GeminiClient;
@@ -24,7 +24,7 @@ public class CVReviewServiceImpl implements CVReviewService {
     private final PDFExtractorService pdfExtractorService;
     private final GeminiClient geminiClient;
     private final OpenAiClient openAiClient;
-    private final IStudentRepository studentRepository;
+    private final StudentRepository studentRepository;
     private final RateLimiter rateLimiter;
 
     @Override

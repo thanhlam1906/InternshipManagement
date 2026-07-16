@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface IMentorRepository extends JpaRepository<Mentor, Integer>
+public interface MentorRepository extends JpaRepository<Mentor, Integer>
 {
     @Query("SELECT COUNT(a) > 0 FROM InternshipAssignment a " +
             "WHERE a.student.id = :studentId AND a.mentor.id = :mentorId")

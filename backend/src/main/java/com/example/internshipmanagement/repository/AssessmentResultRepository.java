@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface IAssessmentResultRepository extends JpaRepository<AssessmentResult, Integer> {
+public interface AssessmentResultRepository extends JpaRepository<AssessmentResult, Integer> {
     @Override
     @EntityGraph(attributePaths = {"assignment", "round", "criterion", "evaluatedBy"})
     List<AssessmentResult> findAll();

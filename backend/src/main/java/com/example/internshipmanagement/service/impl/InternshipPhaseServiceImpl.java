@@ -8,7 +8,7 @@ import com.example.internshipmanagement.constant.ErrorMessages;
 import com.example.internshipmanagement.exception.ResourceConflictException;
 import com.example.internshipmanagement.exception.ResourceNotFoundException;
 import com.example.internshipmanagement.mapper.InternshipPhaseMapper;
-import com.example.internshipmanagement.repository.IInternshipPhaseRepository;
+import com.example.internshipmanagement.repository.InternshipPhaseRepository;
 import com.example.internshipmanagement.service.InternshipPhaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 @Service
 @RequiredArgsConstructor
 public class InternshipPhaseServiceImpl implements InternshipPhaseService {
-    private final IInternshipPhaseRepository internshipPhaseRepository;
+    private final InternshipPhaseRepository internshipPhaseRepository;
     private final InternshipPhaseMapper internshipPhaseMapper;
 
     @Override
